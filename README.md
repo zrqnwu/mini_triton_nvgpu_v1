@@ -29,6 +29,10 @@
 - `tb-stage1-full-to-nvvm-pipeline`
 - `tb-stage1-nvgpu-to-nvvm-pipeline`
 
+## 架构文档
+
+- [Stage1 数据结构与主线 Pass 讲解](docs/stage1_data_structures_and_passes.md)
+
 ## 构建
 
 ```bash
