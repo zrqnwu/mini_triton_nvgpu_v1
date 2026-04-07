@@ -20,17 +20,27 @@ class Stage1Case:
     m: int
     n: int
     k: int
+    block_m: int
+    block_n: int
+    block_k: int
     num_warps: int
     num_stages: int
-    triton_kind: str
-    triton_binary: str
-    triton_kernel: str
-    triton_shared_fallback: int
+    exact_tile: bool
+    group_m: int = 1
+    cubin_format: str = "isa"
+    triton_kind: str = "triton9"
+    triton_binary: str | None = None
+    triton_kernel: str = "matmul_kernel"
+    triton_shared_fallback: int = 0
     triton_meta: str | None = None
 
     @property
     def block_x(self) -> int:
         return self.num_warps * 32
+
+    @property
+    def grid_x(self) -> int:
+        return math.ceil(self.m / self.block_m) * math.ceil(self.n / self.block_n)
 
     @property
     def flops(self) -> int:
@@ -43,8 +53,12 @@ CASES: tuple[Stage1Case, ...] = (
         m=64,
         n=64,
         k=32,
+        block_m=64,
+        block_n=64,
+        block_k=32,
         num_warps=1,
         num_stages=2,
+        exact_tile=True,
         triton_kind="triton",
         triton_binary="/tmp/triton_exact_tile_64x64x32_real.cubin",
         triton_kernel="exact_tile_matmul_kernel",
@@ -60,8 +74,12 @@ CASES: tuple[Stage1Case, ...] = (
         m=64,
         n=128,
         k=32,
+        block_m=64,
+        block_n=128,
+        block_k=32,
         num_warps=4,
         num_stages=2,
+        exact_tile=True,
         triton_kind="triton9",
         triton_binary="/tmp/triton_stage1_64x128x32.cubin",
         triton_kernel="matmul_kernel",
@@ -72,8 +90,12 @@ CASES: tuple[Stage1Case, ...] = (
         m=128,
         n=64,
         k=32,
+        block_m=128,
+        block_n=64,
+        block_k=32,
         num_warps=4,
         num_stages=2,
+        exact_tile=True,
         triton_kind="triton9",
         triton_binary="/tmp/triton_stage1_128x64x32.cubin",
         triton_kernel="matmul_kernel",
@@ -84,8 +106,12 @@ CASES: tuple[Stage1Case, ...] = (
         m=64,
         n=64,
         k=64,
+        block_m=64,
+        block_n=64,
+        block_k=64,
         num_warps=1,
         num_stages=2,
+        exact_tile=True,
         triton_kind="triton9",
         triton_binary="/tmp/triton_stage1_64x64x64.cubin",
         triton_kernel="matmul_kernel",
@@ -101,8 +127,12 @@ CASES: tuple[Stage1Case, ...] = (
         m=128,
         n=128,
         k=32,
+        block_m=128,
+        block_n=128,
+        block_k=32,
         num_warps=4,
         num_stages=2,
+        exact_tile=True,
         triton_kind="triton",
         triton_binary="/tmp/triton_exact_tile_128x128x32_real.cubin",
         triton_kernel="exact_tile_matmul_kernel",
@@ -113,19 +143,63 @@ CASES: tuple[Stage1Case, ...] = (
         m=128,
         n=128,
         k=64,
+        block_m=128,
+        block_n=128,
+        block_k=64,
         num_warps=4,
         num_stages=2,
+        exact_tile=True,
         triton_kind="triton9",
         triton_binary="/tmp/triton_stage1_128x128x64.cubin",
         triton_kernel="matmul_kernel",
         triton_shared_fallback=16896,
+    ),
+    Stage1Case(
+        name="96x80x32_general",
+        m=96,
+        n=80,
+        k=32,
+        block_m=64,
+        block_n=64,
+        block_k=32,
+        num_warps=1,
+        num_stages=2,
+        exact_tile=False,
+        triton_kind="triton9",
+    ),
+    Stage1Case(
+        name="192x128x32_grouped",
+        m=192,
+        n=128,
+        k=32,
+        block_m=64,
+        block_n=64,
+        block_k=32,
+        num_warps=4,
+        num_stages=2,
+        exact_tile=True,
+        group_m=2,
+        triton_kind="triton9",
+    ),
+    Stage1Case(
+        name="160x96x32_general",
+        m=160,
+        n=96,
+        k=32,
+        block_m=64,
+        block_n=64,
+        block_k=32,
+        num_warps=4,
+        num_stages=2,
+        exact_tile=False,
+        triton_kind="triton9",
     ),
 )
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Interleaved fair benchmark for mini_triton_nvgpu_v1 stage1 exact-tile matmul."
+        description="Interleaved fair benchmark for mini_triton_nvgpu_v1 stage1 matmul."
     )
     parser.add_argument(
         "--cases",
@@ -186,6 +260,11 @@ def parse_args() -> argparse.Namespace:
         "--extract-script",
         type=Path,
         default=Path("/home/zhangruiqi/triton_backend_nvgpu/tools/extract_gpu_binary.py"),
+    )
+    parser.add_argument(
+        "--triton-builder",
+        type=Path,
+        default=Path("/home/zhangruiqi/mini_triton_nvgpu_v1/tools/build_triton_stage1_kernel.py"),
     )
     parser.add_argument(
         "--bench-driver",
@@ -290,13 +369,15 @@ def ensure_bench_driver(binary: Path, source: Path) -> None:
 
 
 def make_case_mlir(case: Stage1Case) -> str:
+    group_m_attr = f", group_m = {case.group_m} : i64" if case.group_m != 1 else ""
     return (
         f'module attributes {{"tb.num-warps" = {case.num_warps} : i64, '
         f'"tb.requested-stages" = {case.num_stages} : i64}} {{\n'
         f"  func.func @kernel(%A: memref<{case.m}x{case.k}xf16>, "
         f"%B: memref<{case.k}x{case.n}xf16>, %C: memref<{case.m}x{case.n}xf32>) {{\n"
-        f"    tb.matmul %A, %B, %C {{block_m = {case.m} : i64, "
-        f"block_n = {case.n} : i64, block_k = {case.k} : i64, exact_tile = true}}\n"
+        f"    tb.matmul %A, %B, %C {{block_m = {case.block_m} : i64, "
+        f"block_n = {case.block_n} : i64, block_k = {case.block_k} : i64, "
+        f"exact_tile = {'true' if case.exact_tile else 'false'}{group_m_attr}}}\n"
         f"      : memref<{case.m}x{case.k}xf16>, memref<{case.k}x{case.n}xf16>, "
         f"memref<{case.m}x{case.n}xf32>\n"
         f"    func.return\n"
@@ -326,7 +407,7 @@ def lower_mini_case(
         "tb-stage1-full-to-nvvm-pipeline{"
         f"cubin-chip={gpu_arch} "
         f"cubin-features={ptx_features} "
-        "cubin-format=isa})"
+        f"cubin-format={case.cubin_format}" + "})"
     )
     run(
         [
@@ -372,6 +453,66 @@ def read_triton_shared(case: Stage1Case) -> tuple[int, str]:
     return case.triton_shared_fallback, "fallback"
 
 
+def build_triton_case(
+    case: Stage1Case,
+    out_dir: Path,
+    builder_script: Path,
+) -> tuple[Path, str, int, str]:
+    ensure_file(builder_script, "build_triton_stage1_kernel.py")
+    case_dir = out_dir / case.name
+    case_dir.mkdir(parents=True, exist_ok=True)
+    output_stem = case_dir / f"{case.name}.triton"
+    cubin_path = output_stem.with_suffix(".cubin")
+    metadata_path = output_stem.with_suffix(".json")
+    if not cubin_path.is_file() or not metadata_path.is_file():
+        run(
+            [
+                sys.executable,
+                str(builder_script),
+                "--output-stem",
+                str(output_stem),
+                "--m",
+                str(case.m),
+                "--n",
+                str(case.n),
+                "--k",
+                str(case.k),
+                "--block-m",
+                str(case.block_m),
+                "--block-n",
+                str(case.block_n),
+                "--block-k",
+                str(case.block_k),
+                "--num-warps",
+                str(case.num_warps),
+                "--num-stages",
+                str(case.num_stages),
+                "--group-m",
+                str(case.group_m),
+                "--exact-tile",
+                "true" if case.exact_tile else "false",
+            ]
+        )
+    meta = json.loads(metadata_path.read_text())
+    return cubin_path, str(meta["kernel_name"]), int(meta["shared"]), str(metadata_path)
+
+
+def ensure_triton_case(
+    case: Stage1Case,
+    out_dir: Path,
+    builder_script: Path,
+) -> tuple[str, Path, str, int, str]:
+    if case.triton_binary:
+        binary = Path(case.triton_binary)
+        ensure_file(binary, f"triton binary for {case.name}")
+        shared, source = read_triton_shared(case)
+        return case.triton_kind, binary, case.triton_kernel, shared, source
+    binary, kernel_name, shared, source = build_triton_case(
+        case, out_dir, builder_script
+    )
+    return case.triton_kind, binary, kernel_name, shared, source
+
+
 def find_case(name: str) -> Stage1Case:
     for case in CASES:
         if case.name == name:
@@ -403,7 +544,7 @@ def run_bench_once(
         f"--block-x={case.block_x}",
         "--block-y=1",
         "--block-z=1",
-        "--grid-x=1",
+        f"--grid-x={case.grid_x}",
         "--grid-y=1",
         "--grid-z=1",
         f"--shared={shared_bytes}",
@@ -467,6 +608,9 @@ def order_cases(cases: list[Stage1Case], mode: str) -> list[Stage1Case]:
 def collect_interleaved_samples(
     case: Stage1Case,
     mini_binary: Path,
+    triton_kind: str,
+    triton_binary: Path,
+    triton_kernel: str,
     bench_driver: Path,
     rounds: int,
     warmup: int,
@@ -496,9 +640,9 @@ def collect_interleaved_samples(
                 triton_samples.append(
                     run_bench_once(
                         bench_driver,
-                        case.triton_kind,
-                        Path(case.triton_binary),
-                        case.triton_kernel,
+                        triton_kind,
+                        triton_binary,
+                        triton_kernel,
                         case,
                         warmup,
                         iters,
@@ -512,6 +656,9 @@ def collect_interleaved_samples(
 def preheat_gpu(
     heater_case: Stage1Case,
     mini_binary: Path,
+    triton_kind: str,
+    triton_binary: Path,
+    triton_kernel: str,
     bench_driver: Path,
     warmup: int,
     iters: int,
@@ -535,9 +682,9 @@ def preheat_gpu(
         )
         triton = run_bench_once(
             bench_driver,
-            heater_case.triton_kind,
-            Path(heater_case.triton_binary),
-            heater_case.triton_kernel,
+            triton_kind,
+            triton_binary,
+            triton_kernel,
             heater_case,
             warmup,
             iters,
@@ -581,6 +728,7 @@ def main() -> int:
 
     ensure_bench_driver(args.bench_driver, args.bench_driver_src)
     mini_binaries: dict[str, Path] = {}
+    triton_cases: dict[str, dict[str, Any]] = {}
     for case in cases:
         if args.skip_mini_build:
             mini_binary = args.output_dir / case.name / f"{case.name}.mini.bin"
@@ -595,6 +743,16 @@ def main() -> int:
                 args.ptx_features,
             )
         mini_binaries[case.name] = mini_binary
+        triton_kind, triton_binary, triton_kernel, triton_shared, triton_shared_source = (
+            ensure_triton_case(case, args.output_dir, args.triton_builder)
+        )
+        triton_cases[case.name] = {
+            "kind": triton_kind,
+            "binary": triton_binary,
+            "kernel": triton_kernel,
+            "shared": triton_shared,
+            "shared_source": triton_shared_source,
+        }
 
     report: dict[str, Any] = {
         "rounds": args.rounds,
@@ -622,14 +780,28 @@ def main() -> int:
                     args.gpu_arch,
                     args.ptx_features,
                 )
-        triton_shared, _ = read_triton_shared(heater_case)
+        if heater_case.name not in triton_cases:
+            triton_kind, triton_binary, triton_kernel, triton_shared, triton_shared_source = (
+                ensure_triton_case(heater_case, args.output_dir, args.triton_builder)
+            )
+            triton_cases[heater_case.name] = {
+                "kind": triton_kind,
+                "binary": triton_binary,
+                "kernel": triton_kernel,
+                "shared": triton_shared,
+                "shared_source": triton_shared_source,
+            }
+        heater_triton = triton_cases[heater_case.name]
         preheat_report = preheat_gpu(
             heater_case,
             mini_binaries[heater_case.name],
+            heater_triton["kind"],
+            heater_triton["binary"],
+            heater_triton["kernel"],
             args.bench_driver,
             args.preheat_warmup,
             args.preheat_iters,
-            triton_shared,
+            heater_triton["shared"],
             args.preheat_max_attempts,
             args.preheat_clock_floor_pct,
         )
@@ -642,18 +814,36 @@ def main() -> int:
     case_summaries_by_name: dict[str, dict[str, Any]] = {}
     for case in execution_cases:
         gpu_state_before_case = query_gpu_state()
-        triton_shared, triton_shared_source = read_triton_shared(case)
+        triton_case = triton_cases[case.name]
+        triton_shared = triton_case["shared"]
+        triton_shared_source = triton_case["shared_source"]
         case_preheat_report: dict[str, Any] | None = None
         if args.enable_preheat and not is_clock_hot_enough(
             gpu_state_before_case, args.preheat_clock_floor_pct
         ):
+            heater_case = find_case(args.preheat_case)
+            if heater_case.name not in triton_cases:
+                triton_kind, triton_binary, triton_kernel, triton_shared, triton_shared_source = (
+                    ensure_triton_case(heater_case, args.output_dir, args.triton_builder)
+                )
+                triton_cases[heater_case.name] = {
+                    "kind": triton_kind,
+                    "binary": triton_binary,
+                    "kernel": triton_kernel,
+                    "shared": triton_shared,
+                    "shared_source": triton_shared_source,
+                }
+            heater_triton = triton_cases[heater_case.name]
             case_preheat_report = preheat_gpu(
-                find_case(args.preheat_case),
-                mini_binaries[find_case(args.preheat_case).name],
+                heater_case,
+                mini_binaries[heater_case.name],
+                heater_triton["kind"],
+                heater_triton["binary"],
+                heater_triton["kernel"],
                 args.bench_driver,
                 args.preheat_warmup,
                 args.preheat_iters,
-                read_triton_shared(find_case(args.preheat_case))[0],
+                heater_triton["shared"],
                 args.preheat_max_attempts,
                 args.preheat_clock_floor_pct,
             )
@@ -671,9 +861,9 @@ def main() -> int:
         )
         run_bench_once(
             args.bench_driver,
-            case.triton_kind,
-            Path(case.triton_binary),
-            case.triton_kernel,
+            triton_case["kind"],
+            triton_case["binary"],
+            triton_case["kernel"],
             case,
             warmup=5,
             iters=10,
@@ -683,6 +873,9 @@ def main() -> int:
         mini_samples, triton_samples = collect_interleaved_samples(
             case,
             mini_binaries[case.name],
+            triton_case["kind"],
+            triton_case["binary"],
+            triton_case["kernel"],
             args.bench_driver,
             args.rounds,
             args.warmup,
@@ -710,6 +903,9 @@ def main() -> int:
             extra_mini_samples, extra_triton_samples = collect_interleaved_samples(
                 case,
                 mini_binaries[case.name],
+                triton_case["kind"],
+                triton_case["binary"],
+                triton_case["kernel"],
                 args.bench_driver,
                 args.extra_rounds_for_unstable,
                 args.warmup,
@@ -736,9 +932,16 @@ def main() -> int:
                 "m": case.m,
                 "n": case.n,
                 "k": case.k,
+                "block_m": case.block_m,
+                "block_n": case.block_n,
+                "block_k": case.block_k,
                 "num_warps": case.num_warps,
                 "num_stages": case.num_stages,
+                "exact_tile": case.exact_tile,
+                "group_m": case.group_m,
                 "block_x": case.block_x,
+                "grid_x": case.grid_x,
+                "cubin_format": case.cubin_format,
             },
             "gpu_state_before_case": gpu_state_before_case,
             "gpu_state_after_case": query_gpu_state(),
@@ -751,9 +954,9 @@ def main() -> int:
                 "samples": mini_samples,
             },
             "triton": {
-                "binary": case.triton_binary,
-                "kernel": case.triton_kernel,
-                "kind": case.triton_kind,
+                "binary": str(triton_case["binary"]),
+                "kernel": triton_case["kernel"],
+                "kind": triton_case["kind"],
                 "shared_bytes": triton_shared,
                 "shared_source": triton_shared_source,
                 "summary_ns": triton_summary,

@@ -8,6 +8,7 @@
 #include "mlir/Dialect/LLVMIR/NVVMDialect.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/NVGPU/IR/NVGPUDialect.h"
+#include "mlir/Dialect/SCF/IR/SCF.h"
 #include "mlir/Dialect/Vector/IR/VectorOps.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/BuiltinTypes.h"
@@ -32,27 +33,51 @@ namespace mlir::tb {
 
 namespace {
 
+struct SharedPhysicalLayoutContract {
+  int64_t minorDim = 1;
+  int64_t minorExtent = 0;
+  int64_t perPhase = 1;
+  int64_t maxPhase = 1;
+  int64_t swizzlingByteWidth = 0;
+  int64_t elementBytes = 0;
+};
+
 struct LoweringContract {
   int64_t numWarps = 0;
   int64_t threadsPerWarp = 0;
   int64_t numKGroups = 0;
+  int64_t workspaceTotalBytes = 0;
   ProgramMappingKind mappingKind = ProgramMappingKind::Tile;
   int64_t problemTilesM = 0;
   int64_t problemTilesN = 0;
+  int64_t problemTilesK = 0;
   int64_t groupTileSpanM = 1;
   int64_t groupTileSpanN = 1;
   int64_t programsPerLaunchGroup = 1;
   int64_t totalPrograms = 1;
+  int64_t splitK = 1;
+  int64_t splitKGroupsPerTile = 0;
+  int64_t splitKRemainderTiles = 0;
+  ReductionMode reductionMode = ReductionMode::None;
+  ReductionPlanKind reductionKind = ReductionPlanKind::None;
+  bool persistentEnabled = false;
+  int64_t persistentResidentPrograms = 1;
   int64_t accTilesM = 0;
   int64_t accTilesN = 0;
   int64_t bGroupCount = 0;
   int64_t bGroupTileSpan = 1;
   int64_t aSharedBacking = -1;
   int64_t bSharedBacking = -1;
+  int64_t aWorkspaceOffsetBytes = 0;
+  int64_t bWorkspaceOffsetBytes = 0;
   int64_t aSharedRows = 0;
   int64_t aSharedCols = 0;
   int64_t bSharedRows = 0;
   int64_t bSharedCols = 0;
+  int64_t aSharedViewRows = 0;
+  int64_t aSharedViewCols = 0;
+  int64_t bSharedViewRows = 0;
+  int64_t bSharedViewCols = 0;
   int64_t aAsyncCopyElems = 0;
   int64_t bAsyncCopyElems = 0;
   int64_t aFragRows = 0;
@@ -62,6 +87,9 @@ struct LoweringContract {
   int64_t bGroupFragRows = 0;
   int64_t bGroupFragCols = 0;
   TargetLandingKind cLandingKind = TargetLandingKind::None;
+  EpilogueReorderKind cReorderKind = EpilogueReorderKind::None;
+  int64_t cInitWorkspaceOffsetBytes = 0;
+  int64_t cStoreWorkspaceOffsetBytes = 0;
   int64_t cDirectPackRows = 0;
   int64_t cDirectPackCols = 0;
   int64_t cSharedTileRows = 0;
@@ -72,9 +100,22 @@ struct LoweringContract {
   int64_t cInitSharedLoadVectorWidth = 0;
   int64_t cStoreSharedStoreVectorWidth = 0;
   int64_t cStoreSharedLoadVectorWidth = 0;
+  int64_t cWorkspaceBarrierCount = 0;
+  bool cLoadInitFromGlobal = true;
+  bool cStoreViaAtomicAdd = false;
   bool cUseSharedPackForInit = false;
   bool cUseSharedPackForStore = false;
+  bool cBarrierAfterInit = false;
+  bool cBarrierBeforeStore = false;
+  SharedPhysicalLayoutContract aSharedLayout;
+  SharedPhysicalLayoutContract bSharedLayout;
   std::string cRequiredSyncKind;
+};
+
+struct ProgramWorkAssignment {
+  Value tileM;
+  Value tileN;
+  Value splitKPart;
 };
 
 struct Position {
@@ -118,6 +159,50 @@ struct SharedViewInfo {
   int64_t rows = 0;
   int64_t cols = 0;
 };
+
+static FailureOr<SharedPhysicalLayoutContract>
+buildSharedPhysicalLayoutContract(SharedEncodingAttr attr, int64_t rows,
+                                  int64_t cols, int64_t elementBytes,
+                                  Operation *op, StringRef role) {
+  if (attr.getOrder().size() != 2) {
+    op->emitError() << role << " shared encoding must stay rank-2";
+    return failure();
+  }
+  int64_t minorDim = attr.getOrder().front();
+  if (minorDim < 0 || minorDim > 1) {
+    op->emitError() << role
+                    << " shared encoding minor axis must be 0 or 1";
+    return failure();
+  }
+
+  SharedPhysicalLayoutContract layout;
+  layout.minorDim = minorDim;
+  layout.minorExtent = minorDim == 0 ? rows : cols;
+  layout.perPhase = std::max<int64_t>(attr.getPerPhase(), 1);
+  layout.maxPhase = std::max<int64_t>(attr.getMaxPhase(), 1);
+  layout.swizzlingByteWidth = attr.getSwizzlingByteWidth();
+  layout.elementBytes = elementBytes;
+  if (layout.minorExtent <= 0 || layout.elementBytes <= 0) {
+    op->emitError() << role
+                    << " shared layout contract must carry positive extent and "
+                       "element width";
+    return failure();
+  }
+  if (layout.swizzlingByteWidth > 0) {
+    if (layout.swizzlingByteWidth % layout.elementBytes != 0) {
+      op->emitError() << role << " swizzling byte width must align to the "
+                                 "shared element width";
+      return failure();
+    }
+    int64_t spanElems = layout.swizzlingByteWidth / layout.elementBytes;
+    if (spanElems <= 0 || layout.minorExtent % spanElems != 0) {
+      op->emitError() << role << " swizzle span must divide the shared minor "
+                                 "extent exactly";
+      return failure();
+    }
+  }
+  return layout;
+}
 
 static Value createIndexConstant(OpBuilder &builder, Location loc,
                                  int64_t value) {
@@ -167,17 +252,38 @@ static Value createIndexMinU(OpBuilder &builder, Location loc, Value lhs,
   return arith::SelectOp::create(builder, loc, lhsLtRhs, lhs, rhs);
 }
 
-static Value createAnd(OpBuilder &builder, Location loc, Value lhs, Value rhs) {
-  return arith::AndIOp::create(builder, loc, lhs, rhs);
+static FailureOr<Value> createTypedMemRefViewFromByteBuffer(
+    OpBuilder &builder, Location loc, Value byteBuffer, MemRefType viewType,
+    Value byteShift, Operation *sourceOp) {
+  auto byteBufferType = dyn_cast<MemRefType>(byteBuffer.getType());
+  if (!byteBufferType || byteBufferType.getRank() != 1 ||
+      !byteBufferType.getElementType().isSignlessInteger(8) ||
+      !byteBufferType.getLayout().isIdentity()) {
+    sourceOp->emitError()
+        << "typed shared alias expects a rank-1 identity-layout i8 byte buffer";
+    return failure();
+  }
+  SmallVector<Value> dynamicSizes;
+  for (int64_t size : viewType.getShape()) {
+    if (ShapedType::isDynamic(size)) {
+      sourceOp->emitError()
+          << "typed shared alias currently expects static result shapes";
+      return failure();
+    }
+  }
+  return memref::ViewOp::create(builder, loc, viewType, byteBuffer, byteShift,
+                                dynamicSizes)
+      .getResult();
 }
 
-static FailureOr<std::pair<Value, Value>>
-buildProgramTileCoordinates(OpBuilder &builder, Location loc, Value programId,
-                            const LoweringContract &contract, Operation *op) {
+static FailureOr<ProgramWorkAssignment>
+buildProgramWorkAssignment(OpBuilder &builder, Location loc, Value programId,
+                           const LoweringContract &contract, Operation *op) {
   Value tilesM = createIndexConstant(builder, loc, contract.problemTilesM);
   switch (contract.mappingKind) {
   case ProgramMappingKind::Tile:
-  case ProgramMappingKind::GroupedTile: {
+  case ProgramMappingKind::GroupedTile:
+  case ProgramMappingKind::PersistentTile: {
     Value groupSpanM =
         createIndexConstant(builder, loc, contract.groupTileSpanM);
     Value programsPerLaunchGroup =
@@ -194,13 +300,60 @@ buildProgramTileCoordinates(OpBuilder &builder, Location loc, Value programId,
         createIndexAdd(builder, loc, firstTileM,
                        createIndexRemU(builder, loc, inGroup, groupSizeM));
     Value tileN = createIndexDivU(builder, loc, inGroup, groupSizeM);
-    return std::make_pair(tileM, tileN);
+    return ProgramWorkAssignment{
+        tileM, tileN, createIndexConstant(builder, loc, 0)};
+  }
+  case ProgramMappingKind::SplitK: {
+    Value splitK = createIndexConstant(builder, loc, contract.splitK);
+    Value programsPerLaunchGroup =
+        createIndexConstant(builder, loc, contract.programsPerLaunchGroup);
+    Value groupId =
+        createIndexDivU(builder, loc, programId, programsPerLaunchGroup);
+    Value inGroup =
+        createIndexRemU(builder, loc, programId, programsPerLaunchGroup);
+    Value tileN = createIndexDivU(builder, loc, inGroup, splitK);
+    Value splitKPart = createIndexRemU(builder, loc, inGroup, splitK);
+    return ProgramWorkAssignment{groupId, tileN, splitKPart};
   }
   default:
-    op->emitError()
-        << "lowering currently only supports tile/grouped_tile program mapping";
+    op->emitError() << "lowering currently only supports tile/grouped_tile/"
+                       "split_k/persistent program mapping";
     return failure();
   }
+}
+
+static Value buildSplitKGroupActivePredicate(OpBuilder &builder, Location loc,
+                                             Value splitKPart, int64_t kGroup,
+                                             const LoweringContract &contract) {
+  if (contract.splitK <= 1 || contract.reductionKind != ReductionPlanKind::SplitKAtomic)
+    return Value();
+
+  int64_t baseTiles = contract.problemTilesK / contract.splitK;
+  int64_t extraTiles = contract.problemTilesK % contract.splitK;
+  Value baseTilesValue = createIndexConstant(builder, loc, baseTiles);
+  Value extraTilesValue = createIndexConstant(builder, loc, extraTiles);
+  Value splitLtExtra =
+      createIndexCmpULT(builder, loc, splitKPart, extraTilesValue);
+  Value carriedExtra = createIndexMinU(builder, loc, splitKPart, extraTilesValue);
+  Value tileStart = createIndexAdd(
+      builder, loc, createIndexMul(builder, loc, splitKPart, baseTilesValue),
+      carriedExtra);
+  Value tileCount = createIndexAddConst(builder, loc, baseTilesValue, 0);
+  tileCount = arith::SelectOp::create(
+      builder, loc, splitLtExtra, createIndexAddConst(builder, loc, tileCount, 1),
+      tileCount);
+
+  Value groupsPerTile =
+      createIndexConstant(builder, loc, contract.splitKGroupsPerTile);
+  Value groupStart = createIndexMul(builder, loc, tileStart, groupsPerTile);
+  Value groupEnd = createIndexMul(
+      builder, loc, createIndexAdd(builder, loc, tileStart, tileCount),
+      groupsPerTile);
+  Value kGroupValue = createIndexConstant(builder, loc, kGroup);
+  Value geStart = arith::CmpIOp::create(builder, loc, arith::CmpIPredicate::uge,
+                                        kGroupValue, groupStart);
+  Value ltEnd = createIndexCmpULT(builder, loc, kGroupValue, groupEnd);
+  return arith::AndIOp::create(builder, loc, geStart, ltEnd);
 }
 
 static VectorType getVecType(Type elementType, ArrayRef<int64_t> shape) {
@@ -526,12 +679,16 @@ static FailureOr<LoweringContract>
 validateLoweringContract(const KernelConfig &spec, const TargetInfo &target,
                         const MatmulSemantics &semantics,
                         const ProgramMappingPlan &programMapping,
+                        const ReductionPlan &reduction,
+                        const PersistentWorkPlan &persistentWork,
                         const PipelineReady &pipelineReady,
                         const EncodingPlan &encodings,
                         const TransportPlan &transport,
                         const MatmulRewritePlan &rewrite,
                         const AccumulatorPlan &accumulator,
                         const EpiloguePlan &epilogue,
+                        const EpilogueReorderPlan &epilogueReorder,
+                        const SharedWorkspacePlan &sharedWorkspace,
                         const WarpDecompositionPlan &warpDecomposition,
                         const ResourceClosurePlan &resourceClosure,
                         const BufferModel &model,
@@ -566,6 +723,12 @@ validateLoweringContract(const KernelConfig &spec, const TargetInfo &target,
   if (resourceClosure.chosenLandingTradeoff.empty() ||
       resourceClosure.reason.empty()) {
     op->emitError() << "lowering expects an explicit resource closure plan";
+    return failure();
+  }
+  if (resourceClosure.workspaceTotalBytes != sharedWorkspace.totalBytes ||
+      resourceClosure.peakStaticSharedBytes != sharedWorkspace.peakBytes) {
+    op->emitError()
+        << "lowering expects resource closure to consume the shared workspace";
     return failure();
   }
   for (const DirectGlobalVectorPlan::Pack &pack : initPlan->packs) {
@@ -618,12 +781,48 @@ validateLoweringContract(const KernelConfig &spec, const TargetInfo &target,
       programMapping.groupTileSpanN == programMapping.problemTilesN &&
       programMapping.programsPerLaunchGroup ==
           programMapping.groupTileSpanM * programMapping.groupTileSpanN;
-  if ((!validTileMapping && !validGroupedMapping) ||
-      programMapping.reductionMode != ReductionMode::None ||
-      programMapping.persistent || programMapping.splitK != 1 ||
-      programMapping.programsPerTile != 1) {
-    op->emitError() << "strict lowering only accepts tile/grouped_tile "
-                       "program mapping contracts without split-k/persistent";
+  bool validSplitKMapping =
+      programMapping.mappingKind == ProgramMappingKind::SplitK &&
+      programMapping.launchOrder == ProgramLaunchOrder::RowMajor &&
+      programMapping.swizzleKind == ProgramSwizzleKind::None &&
+      programMapping.groupM == 1 &&
+      programMapping.groupTileSpanM == 1 &&
+      programMapping.groupTileSpanN ==
+          programMapping.problemTilesN * programMapping.splitK &&
+      programMapping.programsPerLaunchGroup == programMapping.groupTileSpanN &&
+      programMapping.programsPerTile == programMapping.splitK;
+  bool validPersistentMapping =
+      programMapping.mappingKind == ProgramMappingKind::PersistentTile &&
+      programMapping.launchOrder == ProgramLaunchOrder::Persistent &&
+      programMapping.swizzleKind == ProgramSwizzleKind::None &&
+      programMapping.groupM == 1 &&
+      programMapping.groupTileSpanM == 1 &&
+      programMapping.groupTileSpanN == programMapping.problemTilesN &&
+      programMapping.programsPerLaunchGroup == programMapping.problemTilesN &&
+      programMapping.programsPerTile == 1;
+  if (programMapping.splitK > 1) {
+    if (!validSplitKMapping || reduction.kind != ReductionPlanKind::SplitKAtomic ||
+        reduction.finalExecutor != "global_atomic_accumulate") {
+      op->emitError() << "stage1 lowering currently only supports explicit "
+                         "split-k parallel atomic execution";
+      return failure();
+    }
+  }
+  if (programMapping.persistent) {
+    if (!validPersistentMapping || !persistentWork.enabled ||
+        !persistentWork.requiresOuterSerialLoop) {
+      op->emitError() << "persistent lowering requires an explicit tile-stride "
+                         "work plan";
+      return failure();
+    }
+  }
+  if ((!validTileMapping && !validGroupedMapping && !validSplitKMapping &&
+       !validPersistentMapping) ||
+      (programMapping.mappingKind != ProgramMappingKind::SplitK &&
+       programMapping.programsPerTile != 1)) {
+    op->emitError() << "strict lowering only accepts tile/grouped_tile/"
+                       "split_k_parallel/persistent mainlines after mapping "
+                       "cleanup";
     return failure();
   }
   if (programMapping.tileM != spec.blockM || programMapping.tileN != spec.blockN ||
@@ -636,10 +835,12 @@ validateLoweringContract(const KernelConfig &spec, const TargetInfo &target,
     op->emitError() << "program mapping must carry positive problem tile counts";
     return failure();
   }
-  if (programMapping.totalPrograms !=
-      programMapping.problemTilesM * programMapping.problemTilesN) {
-    op->emitError() << "program mapping total_programs must equal the real "
-                       "tile coverage";
+  int64_t expectedPrograms = programMapping.problemTilesM *
+                             programMapping.problemTilesN *
+                             std::max<int64_t>(programMapping.splitK, 1);
+  if (programMapping.totalPrograms != expectedPrograms) {
+    op->emitError() << "program mapping total_programs must equal the explicit "
+                       "program coverage";
     return failure();
   }
   auto warpTileShape = getAccumulatorTileShape(encodings, op);
@@ -687,6 +888,12 @@ validateLoweringContract(const KernelConfig &spec, const TargetInfo &target,
                         "lowering_shared_operand_b");
   if (failed(aSharedBacking) || failed(bSharedBacking))
     return failure();
+  auto aSharedShape =
+      getFlattenedSharedAllocShape(model, (*aSharedBacking)->id, op);
+  auto bSharedShape =
+      getFlattenedSharedAllocShape(model, (*bSharedBacking)->id, op);
+  if (failed(aSharedShape) || failed(bSharedShape))
+    return failure();
 
   auto aSharedDesc =
       getMemDescType((*aSharedBacking)->descType, op, "shared_operand_a");
@@ -711,6 +918,17 @@ validateLoweringContract(const KernelConfig &spec, const TargetInfo &target,
     return failure();
   }
 
+  auto aWorkspaceSegment =
+      findSharedWorkspaceSegment(sharedWorkspace,
+                                 SharedWorkspaceSegmentKind::MainloopAStageBuffer,
+                                 "mainloop_a_stage_buffer", op);
+  auto bWorkspaceSegment =
+      findSharedWorkspaceSegment(sharedWorkspace,
+                                 SharedWorkspaceSegmentKind::MainloopBStageBuffer,
+                                 "mainloop_b_stage_buffer", op);
+  if (failed(aWorkspaceSegment) || failed(bWorkspaceSegment))
+    return failure();
+
   int64_t instructionK = encodings.fragmentA.instructionShape.back();
   if (instructionK <= 0 || semantics.tileK % instructionK != 0) {
     op->emitError() << "block_k is incompatible with the fragment instruction K";
@@ -721,23 +939,36 @@ validateLoweringContract(const KernelConfig &spec, const TargetInfo &target,
   contract.numWarps = spec.numWarps;
   contract.threadsPerWarp = target.threadsPerWarp;
   contract.numKGroups = (semantics.problemK + instructionK - 1) / instructionK;
+  contract.workspaceTotalBytes = sharedWorkspace.totalBytes;
   contract.mappingKind = programMapping.mappingKind;
   contract.problemTilesM = programMapping.problemTilesM;
   contract.problemTilesN = programMapping.problemTilesN;
+  contract.problemTilesK = programMapping.problemTilesK;
   contract.groupTileSpanM = programMapping.groupTileSpanM;
   contract.groupTileSpanN = programMapping.groupTileSpanN;
   contract.programsPerLaunchGroup = programMapping.programsPerLaunchGroup;
   contract.totalPrograms = programMapping.totalPrograms;
+  contract.splitK = programMapping.splitK;
+  contract.reductionMode = programMapping.reductionMode;
+  contract.reductionKind = reduction.kind;
+  contract.persistentEnabled = persistentWork.enabled;
+  contract.persistentResidentPrograms = persistentWork.residentPrograms;
   contract.accTilesM = encodings.fragmentAcc.repeatShape.front();
   contract.accTilesN = encodings.fragmentAcc.repeatShape.back();
   contract.bGroupCount = rewrite.bGroupCount;
   contract.bGroupTileSpan = rewrite.bPath.consumerTileSpanN;
   contract.aSharedBacking = (*aSharedBacking)->id;
   contract.bSharedBacking = (*bSharedBacking)->id;
+  contract.aWorkspaceOffsetBytes = (*aWorkspaceSegment)->byteOffset;
+  contract.bWorkspaceOffsetBytes = (*bWorkspaceSegment)->byteOffset;
   contract.aSharedRows = encodings.aSharedSpec.logicalShape[0];
   contract.aSharedCols = encodings.aSharedSpec.logicalShape[1];
   contract.bSharedRows = encodings.bSharedSpec.logicalShape[0];
   contract.bSharedCols = encodings.bSharedSpec.logicalShape[1];
+  contract.aSharedViewRows = (*aSharedShape)[0];
+  contract.aSharedViewCols = (*aSharedShape)[1];
+  contract.bSharedViewRows = (*bSharedShape)[0];
+  contract.bSharedViewCols = (*bSharedShape)[1];
   contract.aFragRows = (*aRegisterShape)[0];
   contract.aFragCols = (*aRegisterShape)[1];
   contract.bSubFragRows = (*bRegisterShape)[0];
@@ -745,25 +976,41 @@ validateLoweringContract(const KernelConfig &spec, const TargetInfo &target,
   contract.bGroupFragRows = contract.bSubFragRows * contract.bGroupTileSpan;
   contract.bGroupFragCols = contract.bSubFragCols;
   contract.cLandingKind = landing->kind;
+  contract.cReorderKind = epilogueReorder.kind;
   contract.cDirectPackRows = landing->directPackRows;
   contract.cDirectPackCols = landing->directPackCols;
-  contract.cSharedTileRows = landing->sharedTileRows;
-  contract.cSharedTileCols = landing->sharedTileCols;
-  contract.cSharedPackSlots = landing->sharedPackSlots;
+  contract.cSharedTileRows = epilogueReorder.sharedTileRows;
+  contract.cSharedTileCols = epilogueReorder.sharedTileCols;
+  contract.cSharedPackSlots = epilogueReorder.liveSlots;
   contract.cGlobalVectorWidth = landing->globalVectorWidth;
-  contract.cInitSharedStoreVectorWidth = landing->initSharedStoreVectorWidth;
-  contract.cInitSharedLoadVectorWidth = landing->initSharedLoadVectorWidth;
-  contract.cStoreSharedStoreVectorWidth = landing->storeSharedStoreVectorWidth;
-  contract.cStoreSharedLoadVectorWidth = landing->storeSharedLoadVectorWidth;
-  contract.cUseSharedPackForInit = landing->useSharedPackForInit;
-  contract.cUseSharedPackForStore = landing->useSharedPackForStore;
-  contract.cRequiredSyncKind = landing->requiredSyncKind;
+  contract.cInitSharedStoreVectorWidth =
+      epilogueReorder.initSharedStoreVectorWidth;
+  contract.cInitSharedLoadVectorWidth =
+      epilogueReorder.initSharedLoadVectorWidth;
+  contract.cStoreSharedStoreVectorWidth =
+      epilogueReorder.storeSharedStoreVectorWidth;
+  contract.cStoreSharedLoadVectorWidth =
+      epilogueReorder.storeSharedLoadVectorWidth;
+  contract.cLoadInitFromGlobal =
+      reduction.kind == ReductionPlanKind::None;
+  contract.cStoreViaAtomicAdd =
+      reduction.kind == ReductionPlanKind::SplitKAtomic;
+  contract.cUseSharedPackForInit =
+      contract.cLoadInitFromGlobal && epilogueReorder.reorderNeededForInit;
+  contract.cUseSharedPackForStore = epilogueReorder.reorderNeededForStore;
+  contract.cWorkspaceBarrierCount = epilogueReorder.workspaceBarrierCount;
+  contract.cBarrierAfterInit = contract.cUseSharedPackForInit;
+  contract.cBarrierBeforeStore = epilogueReorder.reorderNeededForStore;
+  contract.cRequiredSyncKind = epilogueReorder.workspaceSyncKind;
+  contract.splitKGroupsPerTile = spec.blockK / instructionK;
+  contract.splitKRemainderTiles = reduction.remainderKTiles;
 
   if (contract.numKGroups <= 0 || contract.accTilesM <= 0 ||
       contract.accTilesN <= 0 || contract.bGroupCount <= 0 ||
       contract.bGroupTileSpan <= 0 ||
       contract.groupTileSpanM <= 0 || contract.groupTileSpanN <= 0 ||
       contract.programsPerLaunchGroup <= 0 || contract.totalPrograms <= 0 ||
+      contract.splitK <= 0 || contract.splitKGroupsPerTile <= 0 ||
       contract.bGroupCount * contract.bGroupTileSpan != contract.accTilesN) {
     op->emitError() << "invalid lowering contract geometry";
     return failure();
@@ -777,46 +1024,65 @@ validateLoweringContract(const KernelConfig &spec, const TargetInfo &target,
     op->emitError() << "operand fragment register shapes must be positive";
     return failure();
   }
+  if (contract.workspaceTotalBytes <= 0 || contract.aSharedViewRows <= 0 ||
+      contract.aSharedViewCols <= 0 || contract.bSharedViewRows <= 0 ||
+      contract.bSharedViewCols <= 0) {
+    op->emitError() << "shared workspace/view geometry must be explicit";
+    return failure();
+  }
   if (contract.cGlobalVectorWidth <= 0 || contract.cDirectPackRows <= 0 ||
       contract.cDirectPackCols <= 0 || contract.cRequiredSyncKind.empty()) {
     op->emitError() << "direct C target landing geometry must be explicit and "
                        "positive";
     return failure();
   }
-  if (contract.cLandingKind == TargetLandingKind::SharedPackThenGlobalVector) {
+  if (contract.cReorderKind == EpilogueReorderKind::CTASharedRowReorder) {
+    auto initScratch = findSharedWorkspaceSegment(
+        sharedWorkspace, SharedWorkspaceSegmentKind::EpilogueReorderScratch,
+        "epilogue_init_reorder_scratch", op);
+    auto storeScratch = findSharedWorkspaceSegment(
+        sharedWorkspace, SharedWorkspaceSegmentKind::EpilogueReorderScratch,
+        "epilogue_store_reorder_scratch", op);
+    if (failed(initScratch) || failed(storeScratch))
+      return failure();
+    contract.cInitWorkspaceOffsetBytes = (*initScratch)->byteOffset;
+    contract.cStoreWorkspaceOffsetBytes = (*storeScratch)->byteOffset;
     if (contract.cSharedTileRows <= 0 || contract.cSharedTileCols <= 0 ||
         contract.cSharedPackSlots <= 0 ||
         contract.cInitSharedStoreVectorWidth <= 0 ||
         contract.cInitSharedLoadVectorWidth <= 0 ||
         contract.cStoreSharedStoreVectorWidth <= 0 ||
-        contract.cStoreSharedLoadVectorWidth <= 0) {
+        contract.cStoreSharedLoadVectorWidth <= 0 ||
+        contract.cWorkspaceBarrierCount <= 0) {
       op->emitError()
-          << "shared-pack C landing requires positive shared geometry";
+          << "epilogue row reorder requires positive shared geometry";
       return failure();
     }
     if (contract.cSharedTileCols % contract.cGlobalVectorWidth != 0 ||
         contract.cSharedTileCols % contract.cInitSharedLoadVectorWidth != 0 ||
         contract.cSharedTileCols % contract.cStoreSharedStoreVectorWidth != 0) {
-      op->emitError() << "shared-pack C landing tile must stay aligned with "
+      op->emitError() << "epilogue reorder tile must stay aligned with "
                          "all shared/global vector widths";
       return failure();
     }
-  } else if (contract.cLandingKind !=
-             TargetLandingKind::RegisterPackGlobalVector) {
+  } else if (contract.cReorderKind != EpilogueReorderKind::None) {
+    op->emitError() << "unsupported epilogue reorder kind in lowering";
+    return failure();
+  }
+  if (contract.cLandingKind != TargetLandingKind::RegisterPackGlobalVector) {
     op->emitError() << "unsupported C landing kind in lowering";
+    return failure();
+  }
+  if (!StringRef(resourceClosure.selectedCLandingKind)
+           .starts_with("register_direct_vector")) {
+    op->emitError()
+        << "resource closure must select register-direct final C landing";
     return failure();
   }
   if (resourceClosure.chosenLandingTradeoff == "register_direct_vector" &&
       contract.cLandingKind != TargetLandingKind::RegisterPackGlobalVector) {
     op->emitError()
         << "resource closure expects register-direct C landing, but epilogue "
-           "target landing disagrees";
-    return failure();
-  }
-  if (resourceClosure.chosenLandingTradeoff == "shared_pack_vector" &&
-      contract.cLandingKind != TargetLandingKind::SharedPackThenGlobalVector) {
-    op->emitError()
-        << "resource closure expects shared-pack C landing, but epilogue "
            "target landing disagrees";
     return failure();
   }
@@ -831,6 +1097,24 @@ validateLoweringContract(const KernelConfig &spec, const TargetInfo &target,
       getElementByteWidth(bSharedDesc->getElementType(), op, "shared B");
   if (failed(aElementBytes) || failed(bElementBytes))
     return failure();
+  auto aSharedLayout = buildSharedPhysicalLayoutContract(
+      aSharedEncoding, contract.aSharedRows, contract.aSharedCols,
+      *aElementBytes, op, "shared A");
+  auto bSharedLayout = buildSharedPhysicalLayoutContract(
+      bSharedEncoding, contract.bSharedRows, contract.bSharedCols,
+      *bElementBytes, op, "shared B");
+  if (failed(aSharedLayout) || failed(bSharedLayout))
+    return failure();
+  contract.aSharedLayout = *aSharedLayout;
+  contract.bSharedLayout = *bSharedLayout;
+  if (contract.aSharedViewRows * contract.aSharedViewCols * *aElementBytes !=
+          (*aWorkspaceSegment)->byteSize ||
+      contract.bSharedViewRows * contract.bSharedViewCols * *bElementBytes !=
+          (*bWorkspaceSegment)->byteSize) {
+    op->emitError() << "shared workspace byte segments disagree with the "
+                       "flattened shared backing views";
+    return failure();
+  }
 
   int64_t aAsyncBytes = transport.operandA.asyncVectorBytes > 0
                             ? transport.operandA.asyncVectorBytes
@@ -1292,6 +1576,50 @@ static Value createAsyncGroup(OpBuilder &builder, Location loc,
       .getResult();
 }
 
+static Value createIndexXor(OpBuilder &builder, Location loc, Value lhs,
+                            Value rhs) {
+  Type i64Type = builder.getI64Type();
+  Value lhsI64 = arith::IndexCastUIOp::create(builder, loc, i64Type, lhs);
+  Value rhsI64 = arith::IndexCastUIOp::create(builder, loc, i64Type, rhs);
+  Value xorI64 = arith::XOrIOp::create(builder, loc, lhsI64, rhsI64);
+  return arith::IndexCastUIOp::create(builder, loc, builder.getIndexType(),
+                                      xorI64);
+}
+
+static std::pair<Value, Value>
+applySharedPhysicalLayout(OpBuilder &builder, Location loc, Value row, Value col,
+                          const SharedPhysicalLayoutContract &layout) {
+  if (layout.swizzlingByteWidth <= 0 || layout.elementBytes <= 0 ||
+      layout.maxPhase <= 1) {
+    return {row, col};
+  }
+
+  int64_t spanElems = layout.swizzlingByteWidth / layout.elementBytes;
+  if (spanElems <= 0)
+    return {row, col};
+
+  Value minor = layout.minorDim == 0 ? row : col;
+  Value major = layout.minorDim == 0 ? col : row;
+  Value span = createIndexConstant(builder, loc, spanElems);
+  Value phase = createIndexRemU(
+      builder, loc,
+      createIndexDivU(builder, loc, major,
+                      createIndexConstant(builder, loc,
+                                          std::max<int64_t>(layout.perPhase, 1))),
+      createIndexConstant(builder, loc, std::max<int64_t>(layout.maxPhase, 1)));
+  Value chunk = createIndexDivU(builder, loc, minor, span);
+  Value inChunk = createIndexRemU(builder, loc, minor, span);
+  Value chunkCount = createIndexConstant(
+      builder, loc, std::max<int64_t>(layout.minorExtent / spanElems, 1));
+  Value swizzledChunk = createIndexRemU(
+      builder, loc, createIndexXor(builder, loc, chunk, phase), chunkCount);
+  Value swizzledMinor =
+      createIndexAdd(builder, loc,
+                     createIndexMul(builder, loc, swizzledChunk, span), inChunk);
+  return layout.minorDim == 0 ? std::make_pair(swizzledMinor, col)
+                              : std::make_pair(row, swizzledMinor);
+}
+
 static Value buildLaneRowBase(OpBuilder &builder, Location loc, Value laneId,
                               const LaneAccessPattern &laneAccess) {
   return createIndexDivU(builder, loc, laneId,
@@ -1333,26 +1661,6 @@ static LogicalResult validateDirectGlobalVectorMemoryContract(
   return success();
 }
 
-static Value buildDirectLoadStoreMask(OpBuilder &builder, Location loc, Value row,
-                                      Value colBase, int64_t vectorWidth,
-                                      int64_t problemRows, int64_t problemCols) {
-  VectorType maskType = VectorType::get({vectorWidth}, builder.getI1Type());
-  Value mask = arith::ConstantOp::create(
-      builder, loc, maskType,
-      DenseElementsAttr::get(maskType, builder.getBoolAttr(false)));
-  Value problemRowsValue = createIndexConstant(builder, loc, problemRows);
-  Value problemColsValue = createIndexConstant(builder, loc, problemCols);
-  Value rowInBounds = createIndexCmpULT(builder, loc, row, problemRowsValue);
-  for (int64_t i = 0; i < vectorWidth; ++i) {
-    Value col = createIndexAddConst(builder, loc, colBase, i);
-    Value colInBounds = createIndexCmpULT(builder, loc, col, problemColsValue);
-    Value laneInBounds = createAnd(builder, loc, rowInBounds, colInBounds);
-    mask = vector::InsertOp::create(builder, loc, laneInBounds, mask,
-                                    ArrayRef<int64_t>{i});
-  }
-  return mask;
-}
-
 static Value emitGlobalVectorLoadRow(OpBuilder &builder, Location loc,
                                      Value cMemref, Value row, Value col,
                                      VectorType rowVectorType,
@@ -1360,7 +1668,8 @@ static Value emitGlobalVectorLoadRow(OpBuilder &builder, Location loc,
   return EpilogueGlobalVectorLoadOp::create(
              builder, loc, rowVectorType, cMemref, row, col,
              builder.getI64IntegerAttr(plan.vectorWidth),
-             builder.getBoolAttr(plan.boundaryAware))
+             builder.getBoolAttr(plan.boundaryAware),
+             builder.getBoolAttr(plan.scalarTail))
       .getResult();
 }
 
@@ -1371,13 +1680,8 @@ static void emitGlobalVectorStoreRow(OpBuilder &builder, Location loc,
   EpilogueGlobalVectorStoreOp::create(
       builder, loc, rowVector, cMemref, row, col,
       builder.getI64IntegerAttr(plan.vectorWidth),
-      builder.getBoolAttr(plan.boundaryAware));
-}
-
-static Value buildVectorColumnIndex(OpBuilder &builder, Location loc, Value col,
-                                    int64_t vectorWidth) {
-  return createIndexDivU(builder, loc, col,
-                         createIndexConstant(builder, loc, vectorWidth));
+      builder.getBoolAttr(plan.boundaryAware),
+      builder.getBoolAttr(plan.scalarTail));
 }
 
 static void emitSyncWarp(OpBuilder &builder, Location loc) {
@@ -1542,6 +1846,71 @@ static void storeDirectPackToGlobalRows(OpBuilder &builder, Location loc,
   }
 }
 
+static FailureOr<Value> getMemrefDimValue(OpBuilder &builder, Location loc,
+                                          Value memrefValue, int64_t dim,
+                                          StringRef role) {
+  auto memrefType = dyn_cast<MemRefType>(memrefValue.getType());
+  if (!memrefType || memrefType.getRank() != 2) {
+    emitError(loc) << role << " requires a rank-2 memref operand";
+    return failure();
+  }
+  if (!ShapedType::isDynamic(memrefType.getShape()[dim]))
+    return createIndexConstant(builder, loc, memrefType.getShape()[dim]);
+  return memref::DimOp::create(builder, loc, memrefValue, dim).getResult();
+}
+
+static void emitAtomicAddRowToGlobal(OpBuilder &builder, Location loc,
+                                     Value rowVector, Value cMemref, Value row,
+                                     Value colBase,
+                                     const DirectGlobalVectorPlan &plan,
+                                     Value problemRows, Value problemCols) {
+  auto rowVectorType = dyn_cast<VectorType>(rowVector.getType());
+  if (!rowVectorType || rowVectorType.getRank() != 1)
+    llvm_unreachable("atomic epilogue row add expects a rank-1 vector");
+  Value rowInBounds = plan.boundaryAware
+                          ? createIndexCmpULT(builder, loc, row, problemRows)
+                          : Value();
+  for (int64_t i = 0, e = rowVectorType.getShape().front(); i < e; ++i) {
+    Value laneValue = vector::ExtractOp::create(builder, loc, rowVector,
+                                                ArrayRef<int64_t>{i});
+    Value laneCol = createIndexAddConst(builder, loc, colBase, i);
+    if (plan.boundaryAware) {
+      Value colInBounds =
+          createIndexCmpULT(builder, loc, laneCol, problemCols);
+      Value inBounds = arith::AndIOp::create(builder, loc, rowInBounds,
+                                             colInBounds);
+      auto ifOp = scf::IfOp::create(builder, loc, TypeRange{}, inBounds,
+                                    /*withElseRegion=*/false);
+      OpBuilder thenBuilder = ifOp.getThenBodyBuilder();
+      memref::AtomicRMWOp::create(thenBuilder, loc, arith::AtomicRMWKind::addf,
+                                  laneValue, cMemref, ValueRange{row, laneCol});
+      scf::YieldOp::create(thenBuilder, loc);
+      continue;
+    }
+    memref::AtomicRMWOp::create(builder, loc, arith::AtomicRMWKind::addf,
+                                laneValue, cMemref, ValueRange{row, laneCol});
+  }
+}
+
+static void storeDirectPackToGlobalRowsAtomicAdd(
+    OpBuilder &builder, Location loc, Value packValue, Value cMemref,
+    Value rowBase, Value colBase, Value laneId, const DirectGlobalVectorPlan &plan,
+    Value problemRows, Value problemCols) {
+  Value directLaneRowBase = buildLaneRowBase(builder, loc, laneId, plan.laneAccess);
+  Value directLaneColBase = buildLaneColBase(builder, loc, laneId, plan.laneAccess);
+  for (const auto &it : llvm::enumerate(plan.laneAccess.rowOffsets)) {
+    Value rowVector = vector::ExtractOp::create(
+        builder, loc, packValue,
+        ArrayRef<int64_t>{static_cast<int64_t>(it.index())});
+    Value row = createIndexAddConst(
+        builder, loc, createIndexAdd(builder, loc, rowBase, directLaneRowBase),
+        it.value());
+    Value col = createIndexAdd(builder, loc, colBase, directLaneColBase);
+    emitAtomicAddRowToGlobal(builder, loc, rowVector, cMemref, row, col, plan,
+                             problemRows, problemCols);
+  }
+}
+
 static Value buildOperandLaneRow(OpBuilder &builder, Location loc, Value laneId,
                                  const FragmentEncodingSpec &fragmentSpec) {
   return createIndexRemU(builder, loc, laneId,
@@ -1564,11 +1933,14 @@ static Value loadOperandFragment(OpBuilder &builder, Location loc, Value shared,
                                  Value tileBaseRow, Value tileBaseCol,
                                  Value laneRow, Value laneCol,
                                  VectorType fragType,
-                                 const FragmentEncodingSpec &fragmentSpec) {
+                                 const FragmentEncodingSpec &fragmentSpec,
+                                 const SharedPhysicalLayoutContract &layout) {
   Value row = createIndexAdd(builder, loc, tileBaseRow, laneRow);
   Value col = createIndexAdd(builder, loc, tileBaseCol, laneCol);
+  std::pair<Value, Value> physical =
+      applySharedPhysicalLayout(builder, loc, row, col, layout);
   return nvgpu::LdMatrixOp::create(builder, loc, fragType, shared,
-                                   ValueRange{row, col},
+                                   ValueRange{physical.first, physical.second},
                                    /*transpose=*/fragmentSpec.ldmatrixTranspose,
                                    /*numTiles=*/fragmentSpec.ldmatrixTileCount);
 }
@@ -1581,6 +1953,8 @@ static void appendAsyncCopiesForSlice(OpBuilder &builder, Location loc,
                                       int64_t elementsPerCopy, int64_t problemRows,
                                       int64_t problemCols, bool predicated,
                                       bool bypassL1,
+                                      const SharedPhysicalLayoutContract &dstLayout,
+                                      Value activePredicate,
                                       SmallVectorImpl<Value> &tokens) {
   int64_t rows = tileShape[0];
   int64_t cols = tileShape[1];
@@ -1603,7 +1977,9 @@ static void appendAsyncCopiesForSlice(OpBuilder &builder, Location loc,
     Value srcCol = createIndexAdd(builder, loc, col, srcColBase);
     Value dstRow = createIndexAddConst(builder, loc, row, dstRowBase);
     Value dstCol = createIndexAddConst(builder, loc, col, dstColBase);
-    Value srcElements;
+    std::pair<Value, Value> physicalDst =
+        applySharedPhysicalLayout(builder, loc, dstRow, dstCol, dstLayout);
+    Value srcElements = createIndexConstant(builder, loc, elementsPerCopy);
     if (predicated) {
       Value problemRowsValue = createIndexConstant(builder, loc, problemRows);
       Value problemColsValue = createIndexConstant(builder, loc, problemCols);
@@ -1620,14 +1996,21 @@ static void appendAsyncCopiesForSlice(OpBuilder &builder, Location loc,
           builder, loc, rowInBounds, boundedCols,
           createIndexConstant(builder, loc, 0));
     }
+    if (activePredicate) {
+      srcElements = arith::SelectOp::create(
+          builder, loc, activePredicate, srcElements,
+          createIndexConstant(builder, loc, 0));
+    }
     UnitAttr bypassL1Attr = bypassL1 ? builder.getUnitAttr() : UnitAttr();
     tokens.push_back(nvgpu::DeviceAsyncCopyOp::create(
                          builder, loc,
                          nvgpu::DeviceAsyncTokenType::get(builder.getContext()),
-                         dst, ValueRange{dstRow, dstCol}, src,
+                         dst, ValueRange{physicalDst.first, physicalDst.second}, src,
                          ValueRange{srcRow, srcCol},
                          builder.getIndexAttr(elementsPerCopy),
-                         /*srcElements=*/predicated ? srcElements : Value(),
+                         /*srcElements=*/(predicated || activePredicate)
+                             ? srcElements
+                             : Value(),
                          /*bypassL1=*/bypassL1Attr)
                          .getResult());
   }
@@ -1664,28 +2047,43 @@ static LogicalResult emitKernelBody(OpBuilder &builder, gpu::GPUFuncOp gpuFunc,
   Value a = entry.getArgument(0);
   Value b = entry.getArgument(1);
   Value c = entry.getArgument(2);
-  auto workgroupAttributions = gpuFunc.getWorkgroupAttributions();
-  if (workgroupAttributions.size() < 2) {
-    gpuFunc.emitError() << "lowered kernel must keep shared A/B attributions";
-    return failure();
-  }
-  Value aShared = workgroupAttributions[0];
-  Value bShared = workgroupAttributions[1];
-  bool usesCSharedPack =
-      contract.cUseSharedPackForInit || contract.cUseSharedPackForStore;
-  Value cSharedPack;
-  if (usesCSharedPack) {
-    if (workgroupAttributions.size() < 3) {
-      gpuFunc.emitError()
-          << "shared-pack C landing requires a third workgroup attribution";
-      return failure();
-    }
-    cSharedPack = workgroupAttributions[2];
-  }
-
   Type aElementType = cast<MemRefType>(a.getType()).getElementType();
   Type bElementType = cast<MemRefType>(b.getType()).getElementType();
   Type cElementType = cast<MemRefType>(c.getType()).getElementType();
+  auto workgroupAttributions = gpuFunc.getWorkgroupAttributions();
+  if (workgroupAttributions.empty()) {
+    gpuFunc.emitError() << "lowered kernel must keep one CTA shared workspace";
+    return failure();
+  }
+  Value workspace = workgroupAttributions[0];
+  auto workspaceType = dyn_cast<MemRefType>(workspace.getType());
+  if (!workspaceType || workspaceType.getRank() != 1 ||
+      !workspaceType.getElementType().isSignlessInteger(8)) {
+    gpuFunc.emitError() << "workgroup attribution must stay a rank-1 i8 workspace";
+    return failure();
+  }
+  Attribute workspaceMemorySpace = workspaceType.getMemorySpace();
+  MemRefType aSharedType = MemRefType::get(
+      {contract.aSharedViewRows, contract.aSharedViewCols}, aElementType,
+      AffineMap(), workspaceMemorySpace);
+  MemRefType bSharedType = MemRefType::get(
+      {contract.bSharedViewRows, contract.bSharedViewCols}, bElementType,
+      AffineMap(), workspaceMemorySpace);
+  auto aShared = createTypedMemRefViewFromByteBuffer(
+      builder, loc, workspace, aSharedType,
+      createIndexConstant(builder, loc, contract.aWorkspaceOffsetBytes),
+      gpuFunc.getOperation());
+  auto bShared = createTypedMemRefViewFromByteBuffer(
+      builder, loc, workspace, bSharedType,
+      createIndexConstant(builder, loc, contract.bWorkspaceOffsetBytes),
+      gpuFunc.getOperation());
+  if (failed(aShared) || failed(bShared))
+    return failure();
+
+  bool usesCSharedPack =
+      contract.cUseSharedPackForInit || contract.cUseSharedPackForStore;
+  Value cInitSharedPack;
+  Value cStoreSharedPack;
   VectorType aFragType =
       getVecType(aElementType, {contract.aFragRows, contract.aFragCols});
   VectorType bFragGroupType =
@@ -1713,13 +2111,31 @@ static LogicalResult emitKernelBody(OpBuilder &builder, gpu::GPUFuncOp gpuFunc,
              "and accumulator fragment vector widths";
       return failure();
     }
-    auto cSharedPackType = dyn_cast<MemRefType>(cSharedPack.getType());
-    if (!cSharedPackType) {
-      gpuFunc.emitError() << "C shared pack attribution must remain a memref";
-      return failure();
+    MemRefType cSharedPackType = MemRefType::get(
+        {contract.numWarps, contract.cSharedPackSlots, contract.cSharedTileRows,
+         contract.cSharedTileCols},
+        cElementType, AffineMap(), workspaceMemorySpace);
+    if (contract.cUseSharedPackForInit) {
+      auto initView = createTypedMemRefViewFromByteBuffer(
+          builder, loc, workspace, cSharedPackType,
+          createIndexConstant(builder, loc, contract.cInitWorkspaceOffsetBytes),
+          gpuFunc.getOperation());
+      if (failed(initView))
+        return failure();
+      cInitSharedPack = *initView;
     }
-    (void)cSharedPackType;
+    if (contract.cUseSharedPackForStore) {
+      auto storeView = createTypedMemRefViewFromByteBuffer(
+          builder, loc, workspace, cSharedPackType,
+          createIndexConstant(builder, loc, contract.cStoreWorkspaceOffsetBytes),
+          gpuFunc.getOperation());
+      if (failed(storeView))
+        return failure();
+      cStoreSharedPack = *storeView;
+    }
   }
+  Value aSharedValue = *aShared;
+  Value bSharedValue = *bShared;
 
   Value threadsPerWarp =
       createIndexConstant(builder, loc, contract.threadsPerWarp);
@@ -1730,15 +2146,7 @@ static LogicalResult emitKernelBody(OpBuilder &builder, gpu::GPUFuncOp gpuFunc,
   Value warpGridN = createIndexConstant(builder, loc, (*mmaWarpsPerCTA)[1]);
 
   Value threadId = gpu::ThreadIdOp::create(builder, loc, gpu::Dimension::x);
-  Value programId = gpu::BlockIdOp::create(builder, loc, gpu::Dimension::x);
   Value laneId = gpu::LaneIdOp::create(builder, loc, /*upper_bound=*/nullptr);
-  auto tileCoords = buildProgramTileCoordinates(builder, loc, programId, contract,
-                                                gpuFunc.getOperation());
-  if (failed(tileCoords))
-    return failure();
-  Value ctaBaseM = createIndexMul(builder, loc, tileCoords->first, blockM);
-  Value ctaBaseN = createIndexMul(builder, loc, tileCoords->second, blockN);
-
   Value warpId = createIndexDivU(builder, loc, threadId, threadsPerWarp);
   Value warpM = createIndexDivU(builder, loc, warpId, warpGridN);
   Value warpN = createIndexRemU(builder, loc, warpId, warpGridN);
@@ -1762,378 +2170,437 @@ static LogicalResult emitKernelBody(OpBuilder &builder, gpu::GPUFuncOp gpuFunc,
       cpAsyncProducerByOpId[producer.opId] = &producer;
   }
 
-  SmallVector<Value, 32> accs(static_cast<size_t>(accumulator.packs.size()),
-                              Value());
-  for (Value &acc : accs)
-    acc = buildZeroVector(builder, loc, accFragType);
-  size_t packBatchSize = usesCSharedPack
-                             ? static_cast<size_t>(contract.cSharedPackSlots)
-                             : 0;
-  if (contract.cUseSharedPackForInit) {
-    for (size_t batchBegin = 0; batchBegin < initPlan->packs.size();
-         batchBegin += packBatchSize) {
-      size_t batchEnd =
-          std::min(initPlan->packs.size(), batchBegin + packBatchSize);
-      for (size_t packIdx = batchBegin; packIdx < batchEnd; ++packIdx) {
-        const DirectGlobalVectorPlan::Pack &pack = initPlan->packs[packIdx];
-        Value slotId = createIndexConstant(
-            builder, loc, static_cast<int64_t>(packIdx - batchBegin));
-        Value rowBase = createIndexAddConst(
-            builder, loc, createIndexAdd(builder, loc, ctaBaseM, warpBaseM),
-            pack.rowBase);
-        Value colBase = createIndexAddConst(
-            builder, loc, createIndexAdd(builder, loc, ctaBaseN, warpBaseN),
-            pack.colBase);
-        Value directLaneRowBase =
-            buildLaneRowBase(builder, loc, laneId, initPlan->laneAccess);
-        Value directLaneColBase =
-            buildLaneColBase(builder, loc, laneId, initPlan->laneAccess);
-        for (int64_t rowOffset : initPlan->laneAccess.rowOffsets) {
-          Value row = createIndexAddConst(
-              builder, loc,
-              createIndexAdd(builder, loc, rowBase, directLaneRowBase),
-              rowOffset);
-          Value col = createIndexAdd(builder, loc, colBase, directLaneColBase);
-          Value rowVector =
-              emitGlobalVectorLoadRow(builder, loc, c, row, col, cPackRowType,
-                                      *initPlan);
-          storeDirectRowToSharedPack(builder, loc, rowVector, cSharedPack, laneId,
-                                     warpId, slotId, *initPlan, rowOffset);
-        }
-      }
-      emitSyncWarp(builder, loc);
-      for (size_t packIdx = batchBegin; packIdx < batchEnd; ++packIdx) {
-        const DirectGlobalVectorPlan::Pack &pack = initPlan->packs[packIdx];
-        Value slotId = createIndexConstant(
-            builder, loc, static_cast<int64_t>(packIdx - batchBegin));
-        for (int64_t fragmentId : pack.fragmentIds) {
-          accs[fragmentId] = loadAccumulatorFragmentFromSharedPack(
-              builder, loc, cSharedPack, laneId, warpId, slotId, accumulator,
-              accumulator.packs[fragmentId], pack, accFragType);
-        }
-      }
-    }
-  } else {
-    for (const DirectGlobalVectorPlan::Pack &pack : initPlan->packs) {
-      Value rowBase = createIndexAddConst(
-          builder, loc, createIndexAdd(builder, loc, ctaBaseM, warpBaseM),
-          pack.rowBase);
-      Value colBase = createIndexAddConst(
-          builder, loc, createIndexAdd(builder, loc, ctaBaseN, warpBaseN),
-          pack.colBase);
-      Value packValue = materializeDirectPackFromGlobalRows(
-          builder, loc, c, rowBase, colBase, laneId, *initPlan, cDirectPackType,
-          cPackRowType);
-      for (const auto &it : llvm::enumerate(pack.fragmentIds)) {
-        accs[it.value()] = extractAccumulatorFragmentFromPack(
-            builder, loc, packValue, static_cast<int64_t>(it.index()),
-            accumulator.packs.front().vectorWidth, accFragType);
-      }
-    }
-  }
-
-  DenseMap<int64_t, Value> materializedValues;
-  DenseMap<int64_t, Value> asyncGroupsById;
-
-  auto readMaterializedValue =
-      [&](int64_t valueId, StringRef role) -> FailureOr<Value> {
-    auto it = materializedValues.find(valueId);
-    if (it == materializedValues.end()) {
-      gpuFunc.emitError() << role << " value " << valueId
-                          << " has not been materialized yet";
-      return failure();
-    }
-    return it->second;
-  };
-
-  auto emitClusterWaits =
-      [&](const ExplicitPipelineCluster &cluster) -> LogicalResult {
-    for (int64_t groupId : cluster.waitGroupIds) {
-      auto tokenIt = asyncGroupsById.find(groupId);
-      if (tokenIt == asyncGroupsById.end()) {
-        gpuFunc.emitError() << "missing async group token for waited group "
-                            << groupId;
-        return failure();
-      }
-      nvgpu::DeviceAsyncWaitOp::create(builder, loc, tokenIt->second,
-                                       IntegerAttr());
-    }
-    if (cluster.needsBarrier)
-      gpu::BarrierOp::create(builder, loc);
-    return success();
-  };
-
   int64_t instructionM = encodings.fragmentA.instructionShape.front();
   int64_t instructionN = encodings.fragmentB.instructionShape.back();
   int64_t instructionK = encodings.fragmentA.instructionShape.back();
   int64_t bGroupSpan = instructionN * contract.bGroupTileSpan;
   SmallVector<int64_t, 3> mmaShape = {instructionM, instructionN, instructionK};
+  auto problemRows = getMemrefDimValue(builder, loc, c, 0, "lowered epilogue");
+  auto problemCols = getMemrefDimValue(builder, loc, c, 1, "lowered epilogue");
+  if (failed(problemRows) || failed(problemCols))
+    return failure();
 
-  for (const ExplicitPipelineCluster &cluster : explicitClusters) {
-    if (failed(emitClusterWaits(cluster)))
+  auto emitProgramInstance = [&](Value currentProgramId) -> LogicalResult {
+    auto assignment = buildProgramWorkAssignment(builder, loc, currentProgramId,
+                                                 contract, gpuFunc.getOperation());
+    if (failed(assignment))
       return failure();
+    Value ctaBaseM = createIndexMul(builder, loc, assignment->tileM, blockM);
+    Value ctaBaseN = createIndexMul(builder, loc, assignment->tileN, blockN);
+    Value splitKActivePart = assignment->splitKPart;
 
-    for (int64_t opId : cluster.opIds) {
-      const PipelineOp *info = opsById.lookup(opId);
-      if (!info) {
-        gpuFunc.emitError() << "missing pipeline op for expanded cluster op "
-                            << opId;
-        return failure();
-      }
-
-      switch (info->kind) {
-	    case BufferOpKind::LoadA: {
-      if (!info->inputs.empty() || info->outputs.size() != 1) {
-        gpuFunc.emitError() << "load_a op " << info->id
-                            << " must have zero inputs and exactly one output";
-        return failure();
-      }
-      auto producerIt = cpAsyncProducerByOpId.find(info->id);
-      if (producerIt == cpAsyncProducerByOpId.end()) {
-        gpuFunc.emitError() << "missing cp.async producer contract for load_a op "
-                            << info->id;
-        return failure();
-      }
-      auto dstInfo =
-          resolveSharedView(model, producerIt->second->dstView,
-                            gpuFunc.getOperation());
-      if (failed(dstInfo))
-        return failure();
-
-	      SmallVector<Value, 16> copyTokens;
-	      appendAsyncCopiesForSlice(
-	          builder, loc, threadId, a, aShared,
-	          ArrayRef<int64_t>{dstInfo->rows, dstInfo->cols},
-	          createIndexAddConst(builder, loc, ctaBaseM,
-	                              producerIt->second->srcOffsets[0]),
-	          createIndexConstant(builder, loc, producerIt->second->srcOffsets[1]),
-	          dstInfo->rowBase, dstInfo->colBase,
-	          spec.numWarps * contract.threadsPerWarp, contract.aAsyncCopyElems,
-	          semantics.problemM, semantics.problemK,
-	          producerIt->second->predicated || producerIt->second->zeroFill,
-	          producerIt->second->bypassL1,
-	          copyTokens);
-	      asyncGroupsById[producerIt->second->groupId] =
-	          createAsyncGroup(builder, loc, copyTokens);
-	      break;
-    }
-    case BufferOpKind::LoadB: {
-      if (!info->inputs.empty() || info->outputs.size() != 1) {
-        gpuFunc.emitError() << "load_b op " << info->id
-                            << " must have zero inputs and exactly one output";
-        return failure();
-      }
-      auto producerIt = cpAsyncProducerByOpId.find(info->id);
-      if (producerIt == cpAsyncProducerByOpId.end()) {
-        gpuFunc.emitError() << "missing cp.async producer contract for load_b op "
-                            << info->id;
-        return failure();
-      }
-      auto dstInfo =
-          resolveSharedView(model, producerIt->second->dstView,
-                            gpuFunc.getOperation());
-      if (failed(dstInfo))
-        return failure();
-
-	      SmallVector<Value, 16> copyTokens;
-	      appendAsyncCopiesForSlice(
-	          builder, loc, threadId, b, bShared,
-	          ArrayRef<int64_t>{dstInfo->rows, dstInfo->cols},
-	          createIndexConstant(builder, loc, producerIt->second->srcOffsets[0]),
-	          createIndexAddConst(builder, loc, ctaBaseN,
-	                              producerIt->second->srcOffsets[1]),
-	          dstInfo->rowBase, dstInfo->colBase,
-	          spec.numWarps * contract.threadsPerWarp, contract.bAsyncCopyElems,
-	          semantics.problemK, semantics.problemN,
-	          producerIt->second->predicated || producerIt->second->zeroFill,
-	          producerIt->second->bypassL1,
-	          copyTokens);
-	      asyncGroupsById[producerIt->second->groupId] =
-	          createAsyncGroup(builder, loc, copyTokens);
-	      break;
-    }
-    case BufferOpKind::LocalLoadA: {
-      if (info->inputs.size() != 1 || info->outputs.size() != 1) {
-        gpuFunc.emitError() << "local_load_a op " << info->id
-                            << " must have one input and one output";
-        return failure();
-      }
-      auto srcValueIt = valuesById.find(info->inputs.front());
-      if (srcValueIt == valuesById.end()) {
-        gpuFunc.emitError() << "local_load_a op " << info->id
-                            << " references unknown input value";
-        return failure();
-      }
-      auto sharedView =
-          resolveSharedView(model, srcValueIt->second->ownerView,
-                            gpuFunc.getOperation());
-      if (failed(sharedView))
-        return failure();
-      if (sharedView->backing != contract.aSharedBacking) {
-        gpuFunc.emitError() << "local_load_a op " << info->id
-                            << " must read from the shared operand A backing";
-        return failure();
-      }
-      int64_t mTile = findIterationCoord(info->iterationCoords, "m_tile");
-
-      Value tileBaseM =
-          createIndexAddConst(builder, loc, warpBaseM,
-                              sharedView->rowBase + mTile * instructionM);
-      materializedValues[info->outputs.front()] =
-          loadOperandFragment(builder, loc, aShared, tileBaseM,
-                              createIndexConstant(builder, loc, sharedView->colBase),
-                              laneRowA, laneColA, aFragType,
-                              encodings.fragmentA);
-      break;
-    }
-    case BufferOpKind::LocalLoadB: {
-      if (info->inputs.size() != 1 || info->outputs.size() != 1) {
-        gpuFunc.emitError() << "local_load_b op " << info->id
-                            << " must have one input and one output";
-        return failure();
-      }
-      auto srcValueIt = valuesById.find(info->inputs.front());
-      if (srcValueIt == valuesById.end()) {
-        gpuFunc.emitError() << "local_load_b op " << info->id
-                            << " references unknown input value";
-        return failure();
-      }
-      auto sharedView =
-          resolveSharedView(model, srcValueIt->second->ownerView,
-                            gpuFunc.getOperation());
-      if (failed(sharedView))
-        return failure();
-      if (sharedView->backing != contract.bSharedBacking) {
-        gpuFunc.emitError() << "local_load_b op " << info->id
-                            << " must read from the shared operand B backing";
-        return failure();
-      }
-      int64_t nGroup = findIterationCoord(info->iterationCoords, "n_group");
-
-      Value tileBaseN = createIndexAddConst(builder, loc, warpBaseN,
-                                            sharedView->colBase +
-                                                nGroup * bGroupSpan);
-      materializedValues[info->outputs.front()] = loadOperandFragment(
-          builder, loc, bShared,
-          createIndexConstant(builder, loc, sharedView->rowBase), tileBaseN,
-          laneRowB, laneColB, bFragGroupType, encodings.fragmentB);
-      break;
-    }
-    case BufferOpKind::Mma: {
-      int64_t accIndex = findIterationCoord(info->iterationCoords, "acc_index");
-      int64_t groupOffset =
-          findIterationCoord(info->iterationCoords, "group_offset");
-      if (info->inputs.size() < 2 || info->inputs.size() > 3 ||
-          info->outputs.size() != 1 || accIndex < 0 ||
-          accIndex >= static_cast<int64_t>(accs.size())) {
-        gpuFunc.emitError() << "mma op " << info->id
-                            << " is inconsistent with the lowering contract";
-        return failure();
-      }
-
-      auto aFrag = readMaterializedValue(info->inputs[0], "A fragment");
-      auto bGroup =
-          readMaterializedValue(info->inputs[1], "B fragment group");
-      if (failed(aFrag) || failed(bGroup))
-        return failure();
-
-      Value bFrag;
-      if (groupOffset < 0 || groupOffset >= contract.bGroupTileSpan) {
-        gpuFunc.emitError() << "mma op " << info->id
-                            << " must reference a valid B fragment-group offset";
-        return failure();
-      }
-      ArrayRef<int64_t> bGroupShape = bFragGroupType.getShape();
-      bFrag = vector::ExtractStridedSliceOp::create(
-          builder, loc, *bGroup,
-          ArrayRef<int64_t>{groupOffset * contract.bSubFragRows, 0},
-          ArrayRef<int64_t>{contract.bSubFragRows, bGroupShape[1]},
-          ArrayRef<int64_t>{1, 1});
-
-      Value acc = accs[accIndex];
-      if (info->inputs.size() >= 3) {
-        auto carriedAcc = readMaterializedValue(info->inputs[2], "accumulator");
-        if (failed(carriedAcc))
-          return failure();
-        acc = *carriedAcc;
-      }
-
-      Value nextAcc = nvgpu::MmaSyncOp::create(builder, loc, *aFrag, bFrag, acc,
-                                               mmaShape);
-      materializedValues[info->outputs.front()] = nextAcc;
-      accs[accIndex] = nextAcc;
-      break;
-    }
-    default:
-      gpuFunc.emitError() << "unsupported pipeline op " << info->id;
-      return failure();
-    }
-    }
-  }
-
-  if (contract.cUseSharedPackForStore) {
-    for (size_t batchBegin = 0; batchBegin < storePlan->packs.size();
-         batchBegin += packBatchSize) {
-      size_t batchEnd =
-          std::min(storePlan->packs.size(), batchBegin + packBatchSize);
-      for (size_t packIdx = batchBegin; packIdx < batchEnd; ++packIdx) {
-        const DirectGlobalVectorPlan::Pack &pack = storePlan->packs[packIdx];
-        Value slotId = createIndexConstant(
-            builder, loc, static_cast<int64_t>(packIdx - batchBegin));
-        for (int64_t fragmentId : pack.fragmentIds) {
-          storeAccumulatorFragmentToSharedPack(
-              builder, loc, accs[fragmentId], cSharedPack, laneId, warpId,
-              slotId, accumulator, accumulator.packs[fragmentId], pack);
+    SmallVector<Value, 32> accs(static_cast<size_t>(accumulator.packs.size()),
+                                Value());
+    for (Value &acc : accs)
+      acc = buildZeroVector(builder, loc, accFragType);
+    size_t packBatchSize = usesCSharedPack
+                               ? static_cast<size_t>(contract.cSharedPackSlots)
+                               : 0;
+    if (contract.cLoadInitFromGlobal && contract.cUseSharedPackForInit) {
+      for (size_t batchBegin = 0; batchBegin < initPlan->packs.size();
+           batchBegin += packBatchSize) {
+        size_t batchEnd =
+            std::min(initPlan->packs.size(), batchBegin + packBatchSize);
+        for (size_t packIdx = batchBegin; packIdx < batchEnd; ++packIdx) {
+          const DirectGlobalVectorPlan::Pack &pack = initPlan->packs[packIdx];
+          Value slotId = createIndexConstant(
+              builder, loc, static_cast<int64_t>(packIdx - batchBegin));
+          Value rowBase = createIndexAddConst(
+              builder, loc, createIndexAdd(builder, loc, ctaBaseM, warpBaseM),
+              pack.rowBase);
+          Value colBase = createIndexAddConst(
+              builder, loc, createIndexAdd(builder, loc, ctaBaseN, warpBaseN),
+              pack.colBase);
+          Value directLaneRowBase =
+              buildLaneRowBase(builder, loc, laneId, initPlan->laneAccess);
+          Value directLaneColBase =
+              buildLaneColBase(builder, loc, laneId, initPlan->laneAccess);
+          for (int64_t rowOffset : initPlan->laneAccess.rowOffsets) {
+            Value row = createIndexAddConst(
+                builder, loc,
+                createIndexAdd(builder, loc, rowBase, directLaneRowBase),
+                rowOffset);
+            Value col = createIndexAdd(builder, loc, colBase, directLaneColBase);
+            Value rowVector =
+                emitGlobalVectorLoadRow(builder, loc, c, row, col, cPackRowType,
+                                        *initPlan);
+            storeDirectRowToSharedPack(builder, loc, rowVector, cInitSharedPack,
+                                       laneId, warpId, slotId, *initPlan,
+                                       rowOffset);
+          }
+        }
+        emitSyncWarp(builder, loc);
+        for (size_t packIdx = batchBegin; packIdx < batchEnd; ++packIdx) {
+          const DirectGlobalVectorPlan::Pack &pack = initPlan->packs[packIdx];
+          Value slotId = createIndexConstant(
+              builder, loc, static_cast<int64_t>(packIdx - batchBegin));
+          for (int64_t fragmentId : pack.fragmentIds) {
+            accs[fragmentId] = loadAccumulatorFragmentFromSharedPack(
+                builder, loc, cInitSharedPack, laneId, warpId, slotId,
+                accumulator, accumulator.packs[fragmentId], pack, accFragType);
+          }
         }
       }
-      emitSyncWarp(builder, loc);
-
-      for (size_t packIdx = batchBegin; packIdx < batchEnd; ++packIdx) {
-        const DirectGlobalVectorPlan::Pack &pack = storePlan->packs[packIdx];
-        Value slotId = createIndexConstant(
-            builder, loc, static_cast<int64_t>(packIdx - batchBegin));
+      if (contract.cBarrierAfterInit)
+        gpu::BarrierOp::create(builder, loc);
+    } else if (contract.cLoadInitFromGlobal) {
+      for (const DirectGlobalVectorPlan::Pack &pack : initPlan->packs) {
         Value rowBase = createIndexAddConst(
             builder, loc, createIndexAdd(builder, loc, ctaBaseM, warpBaseM),
             pack.rowBase);
         Value colBase = createIndexAddConst(
             builder, loc, createIndexAdd(builder, loc, ctaBaseN, warpBaseN),
             pack.colBase);
-        Value directLaneRowBase =
-            buildLaneRowBase(builder, loc, laneId, storePlan->laneAccess);
-        Value directLaneColBase =
-            buildLaneColBase(builder, loc, laneId, storePlan->laneAccess);
-        for (int64_t rowOffset : storePlan->laneAccess.rowOffsets) {
-          Value rowVector = loadDirectRowFromSharedPack(
-              builder, loc, cSharedPack, laneId, warpId, slotId, *storePlan,
-              rowOffset, cPackRowType);
-          Value row = createIndexAddConst(
-              builder, loc,
-              createIndexAdd(builder, loc, rowBase, directLaneRowBase),
-              rowOffset);
-          Value col = createIndexAdd(builder, loc, colBase, directLaneColBase);
-          emitGlobalVectorStoreRow(builder, loc, rowVector, c, row, col,
-                                   *storePlan);
+        Value packValue = materializeDirectPackFromGlobalRows(
+            builder, loc, c, rowBase, colBase, laneId, *initPlan,
+            cDirectPackType, cPackRowType);
+        for (const auto &it : llvm::enumerate(pack.fragmentIds)) {
+          accs[it.value()] = extractAccumulatorFragmentFromPack(
+              builder, loc, packValue, static_cast<int64_t>(it.index()),
+              accumulator.packs.front().vectorWidth, accFragType);
         }
       }
     }
-  } else {
-    for (const DirectGlobalVectorPlan::Pack &pack : storePlan->packs) {
-      SmallVector<Value, 4> fragmentValues;
-      fragmentValues.reserve(pack.fragmentIds.size());
-      for (int64_t fragmentId : pack.fragmentIds)
-        fragmentValues.push_back(accs[fragmentId]);
-      Value packValue = assembleDirectPackFromFragments(
-          builder, loc, fragmentValues, accumulator.packs.front().vectorWidth,
-          cDirectPackType);
-      Value rowBase = createIndexAddConst(
-          builder, loc, createIndexAdd(builder, loc, ctaBaseM, warpBaseM),
-          pack.rowBase);
-      Value colBase = createIndexAddConst(
-          builder, loc, createIndexAdd(builder, loc, ctaBaseN, warpBaseN),
-          pack.colBase);
-      storeDirectPackToGlobalRows(builder, loc, packValue, c, rowBase, colBase,
-                                  laneId, *storePlan);
+
+    DenseMap<int64_t, Value> materializedValues;
+    DenseMap<int64_t, Value> asyncGroupsById;
+
+    auto readMaterializedValue =
+        [&](int64_t valueId, StringRef role) -> FailureOr<Value> {
+      auto it = materializedValues.find(valueId);
+      if (it == materializedValues.end()) {
+        gpuFunc.emitError() << role << " value " << valueId
+                            << " has not been materialized yet";
+        return failure();
+      }
+      return it->second;
+    };
+
+    auto emitClusterWaits =
+        [&](const ExplicitPipelineCluster &cluster) -> LogicalResult {
+      for (int64_t groupId : cluster.waitGroupIds) {
+        auto tokenIt = asyncGroupsById.find(groupId);
+        if (tokenIt == asyncGroupsById.end()) {
+          gpuFunc.emitError() << "missing async group token for waited group "
+                              << groupId;
+          return failure();
+        }
+        nvgpu::DeviceAsyncWaitOp::create(builder, loc, tokenIt->second,
+                                         IntegerAttr());
+      }
+      if (cluster.needsBarrier)
+        gpu::BarrierOp::create(builder, loc);
+      return success();
+    };
+
+    for (const ExplicitPipelineCluster &cluster : explicitClusters) {
+      if (failed(emitClusterWaits(cluster)))
+        return failure();
+      Value splitKGroupActive = buildSplitKGroupActivePredicate(
+          builder, loc, splitKActivePart, cluster.kGroup, contract);
+
+      for (int64_t opId : cluster.opIds) {
+        const PipelineOp *info = opsById.lookup(opId);
+        if (!info) {
+          gpuFunc.emitError() << "missing pipeline op for expanded cluster op "
+                              << opId;
+          return failure();
+        }
+
+        switch (info->kind) {
+        case BufferOpKind::LoadA: {
+          if (!info->inputs.empty() || info->outputs.size() != 1) {
+            gpuFunc.emitError() << "load_a op " << info->id
+                                << " must have zero inputs and exactly one output";
+            return failure();
+          }
+          auto producerIt = cpAsyncProducerByOpId.find(info->id);
+          if (producerIt == cpAsyncProducerByOpId.end()) {
+            gpuFunc.emitError()
+                << "missing cp.async producer contract for load_a op "
+                << info->id;
+            return failure();
+          }
+          auto dstInfo =
+              resolveSharedView(model, producerIt->second->dstView,
+                                gpuFunc.getOperation());
+          if (failed(dstInfo))
+            return failure();
+
+          SmallVector<Value, 16> copyTokens;
+          appendAsyncCopiesForSlice(
+              builder, loc, threadId, a, aSharedValue,
+              ArrayRef<int64_t>{dstInfo->rows, dstInfo->cols},
+              createIndexAddConst(builder, loc, ctaBaseM,
+                                  producerIt->second->srcOffsets[0]),
+              createIndexConstant(builder, loc, producerIt->second->srcOffsets[1]),
+              dstInfo->rowBase, dstInfo->colBase,
+              spec.numWarps * contract.threadsPerWarp, contract.aAsyncCopyElems,
+              semantics.problemM, semantics.problemK,
+              producerIt->second->predicated || producerIt->second->zeroFill,
+              producerIt->second->bypassL1, contract.aSharedLayout,
+              splitKGroupActive, copyTokens);
+          asyncGroupsById[producerIt->second->groupId] =
+              createAsyncGroup(builder, loc, copyTokens);
+          break;
+        }
+        case BufferOpKind::LoadB: {
+          if (!info->inputs.empty() || info->outputs.size() != 1) {
+            gpuFunc.emitError() << "load_b op " << info->id
+                                << " must have zero inputs and exactly one output";
+            return failure();
+          }
+          auto producerIt = cpAsyncProducerByOpId.find(info->id);
+          if (producerIt == cpAsyncProducerByOpId.end()) {
+            gpuFunc.emitError()
+                << "missing cp.async producer contract for load_b op "
+                << info->id;
+            return failure();
+          }
+          auto dstInfo =
+              resolveSharedView(model, producerIt->second->dstView,
+                                gpuFunc.getOperation());
+          if (failed(dstInfo))
+            return failure();
+
+          SmallVector<Value, 16> copyTokens;
+          appendAsyncCopiesForSlice(
+              builder, loc, threadId, b, bSharedValue,
+              ArrayRef<int64_t>{dstInfo->rows, dstInfo->cols},
+              createIndexConstant(builder, loc, producerIt->second->srcOffsets[0]),
+              createIndexAddConst(builder, loc, ctaBaseN,
+                                  producerIt->second->srcOffsets[1]),
+              dstInfo->rowBase, dstInfo->colBase,
+              spec.numWarps * contract.threadsPerWarp, contract.bAsyncCopyElems,
+              semantics.problemK, semantics.problemN,
+              producerIt->second->predicated || producerIt->second->zeroFill,
+              producerIt->second->bypassL1, contract.bSharedLayout,
+              splitKGroupActive, copyTokens);
+          asyncGroupsById[producerIt->second->groupId] =
+              createAsyncGroup(builder, loc, copyTokens);
+          break;
+        }
+        case BufferOpKind::LocalLoadA: {
+          if (info->inputs.size() != 1 || info->outputs.size() != 1) {
+            gpuFunc.emitError() << "local_load_a op " << info->id
+                                << " must have one input and one output";
+            return failure();
+          }
+          auto srcValueIt = valuesById.find(info->inputs.front());
+          if (srcValueIt == valuesById.end()) {
+            gpuFunc.emitError() << "local_load_a op " << info->id
+                                << " references unknown input value";
+            return failure();
+          }
+          auto sharedView =
+              resolveSharedView(model, srcValueIt->second->ownerView,
+                                gpuFunc.getOperation());
+          if (failed(sharedView))
+            return failure();
+          if (sharedView->backing != contract.aSharedBacking) {
+            gpuFunc.emitError()
+                << "local_load_a op " << info->id
+                << " must read from the shared operand A backing";
+            return failure();
+          }
+          int64_t mTile = findIterationCoord(info->iterationCoords, "m_tile");
+
+          Value tileBaseM =
+              createIndexAddConst(builder, loc, warpBaseM,
+                                  sharedView->rowBase + mTile * instructionM);
+          materializedValues[info->outputs.front()] =
+              loadOperandFragment(builder, loc, aSharedValue, tileBaseM,
+                                  createIndexConstant(builder, loc,
+                                                      sharedView->colBase),
+                                  laneRowA, laneColA, aFragType,
+                                  encodings.fragmentA, contract.aSharedLayout);
+          break;
+        }
+        case BufferOpKind::LocalLoadB: {
+          if (info->inputs.size() != 1 || info->outputs.size() != 1) {
+            gpuFunc.emitError() << "local_load_b op " << info->id
+                                << " must have one input and one output";
+            return failure();
+          }
+          auto srcValueIt = valuesById.find(info->inputs.front());
+          if (srcValueIt == valuesById.end()) {
+            gpuFunc.emitError() << "local_load_b op " << info->id
+                                << " references unknown input value";
+            return failure();
+          }
+          auto sharedView =
+              resolveSharedView(model, srcValueIt->second->ownerView,
+                                gpuFunc.getOperation());
+          if (failed(sharedView))
+            return failure();
+          if (sharedView->backing != contract.bSharedBacking) {
+            gpuFunc.emitError()
+                << "local_load_b op " << info->id
+                << " must read from the shared operand B backing";
+            return failure();
+          }
+          int64_t nGroup = findIterationCoord(info->iterationCoords, "n_group");
+
+          Value tileBaseN = createIndexAddConst(builder, loc, warpBaseN,
+                                                sharedView->colBase +
+                                                    nGroup * bGroupSpan);
+          materializedValues[info->outputs.front()] = loadOperandFragment(
+              builder, loc, bSharedValue,
+              createIndexConstant(builder, loc, sharedView->rowBase), tileBaseN,
+              laneRowB, laneColB, bFragGroupType, encodings.fragmentB,
+              contract.bSharedLayout);
+          break;
+        }
+        case BufferOpKind::Mma: {
+          int64_t accIndex = findIterationCoord(info->iterationCoords, "acc_index");
+          int64_t groupOffset =
+              findIterationCoord(info->iterationCoords, "group_offset");
+          if (info->inputs.size() < 2 || info->inputs.size() > 3 ||
+              info->outputs.size() != 1 || accIndex < 0 ||
+              accIndex >= static_cast<int64_t>(accs.size())) {
+            gpuFunc.emitError() << "mma op " << info->id
+                                << " is inconsistent with the lowering contract";
+            return failure();
+          }
+
+          auto aFrag = readMaterializedValue(info->inputs[0], "A fragment");
+          auto bGroup =
+              readMaterializedValue(info->inputs[1], "B fragment group");
+          if (failed(aFrag) || failed(bGroup))
+            return failure();
+
+          if (groupOffset < 0 || groupOffset >= contract.bGroupTileSpan) {
+            gpuFunc.emitError()
+                << "mma op " << info->id
+                << " must reference a valid B fragment-group offset";
+            return failure();
+          }
+          ArrayRef<int64_t> bGroupShape = bFragGroupType.getShape();
+          Value bFrag = vector::ExtractStridedSliceOp::create(
+              builder, loc, *bGroup,
+              ArrayRef<int64_t>{groupOffset * contract.bSubFragRows, 0},
+              ArrayRef<int64_t>{contract.bSubFragRows, bGroupShape[1]},
+              ArrayRef<int64_t>{1, 1});
+
+          Value acc = accs[accIndex];
+          if (info->inputs.size() >= 3) {
+            auto carriedAcc =
+                readMaterializedValue(info->inputs[2], "accumulator");
+            if (failed(carriedAcc))
+              return failure();
+            acc = *carriedAcc;
+          }
+
+          Value nextAcc = nvgpu::MmaSyncOp::create(builder, loc, *aFrag, bFrag,
+                                                   acc, mmaShape);
+          materializedValues[info->outputs.front()] = nextAcc;
+          accs[accIndex] = nextAcc;
+          break;
+        }
+        default:
+          gpuFunc.emitError() << "unsupported pipeline op " << info->id;
+          return failure();
+        }
+      }
     }
+
+    if (contract.cUseSharedPackForStore) {
+      if (contract.cBarrierBeforeStore)
+        gpu::BarrierOp::create(builder, loc);
+      for (size_t batchBegin = 0; batchBegin < storePlan->packs.size();
+           batchBegin += packBatchSize) {
+        size_t batchEnd =
+            std::min(storePlan->packs.size(), batchBegin + packBatchSize);
+        for (size_t packIdx = batchBegin; packIdx < batchEnd; ++packIdx) {
+          const DirectGlobalVectorPlan::Pack &pack = storePlan->packs[packIdx];
+          Value slotId = createIndexConstant(
+              builder, loc, static_cast<int64_t>(packIdx - batchBegin));
+          for (int64_t fragmentId : pack.fragmentIds) {
+            storeAccumulatorFragmentToSharedPack(
+                builder, loc, accs[fragmentId], cStoreSharedPack, laneId, warpId,
+                slotId, accumulator, accumulator.packs[fragmentId], pack);
+          }
+        }
+        emitSyncWarp(builder, loc);
+
+        for (size_t packIdx = batchBegin; packIdx < batchEnd; ++packIdx) {
+          const DirectGlobalVectorPlan::Pack &pack = storePlan->packs[packIdx];
+          Value slotId = createIndexConstant(
+              builder, loc, static_cast<int64_t>(packIdx - batchBegin));
+          Value rowBase = createIndexAddConst(
+              builder, loc, createIndexAdd(builder, loc, ctaBaseM, warpBaseM),
+              pack.rowBase);
+          Value colBase = createIndexAddConst(
+              builder, loc, createIndexAdd(builder, loc, ctaBaseN, warpBaseN),
+              pack.colBase);
+          Value directLaneRowBase =
+              buildLaneRowBase(builder, loc, laneId, storePlan->laneAccess);
+          Value directLaneColBase =
+              buildLaneColBase(builder, loc, laneId, storePlan->laneAccess);
+          for (int64_t rowOffset : storePlan->laneAccess.rowOffsets) {
+            Value rowVector = loadDirectRowFromSharedPack(
+                builder, loc, cStoreSharedPack, laneId, warpId, slotId,
+                *storePlan, rowOffset, cPackRowType);
+            Value row = createIndexAddConst(
+                builder, loc,
+                createIndexAdd(builder, loc, rowBase, directLaneRowBase),
+                rowOffset);
+            Value col = createIndexAdd(builder, loc, colBase, directLaneColBase);
+            if (contract.cStoreViaAtomicAdd) {
+              emitAtomicAddRowToGlobal(builder, loc, rowVector, c, row, col,
+                                       *storePlan, *problemRows, *problemCols);
+            } else {
+              emitGlobalVectorStoreRow(builder, loc, rowVector, c, row, col,
+                                       *storePlan);
+            }
+          }
+        }
+      }
+    } else {
+      for (const DirectGlobalVectorPlan::Pack &pack : storePlan->packs) {
+        SmallVector<Value, 4> fragmentValues;
+        fragmentValues.reserve(pack.fragmentIds.size());
+        for (int64_t fragmentId : pack.fragmentIds)
+          fragmentValues.push_back(accs[fragmentId]);
+        Value packValue = assembleDirectPackFromFragments(
+            builder, loc, fragmentValues, accumulator.packs.front().vectorWidth,
+            cDirectPackType);
+        Value rowBase = createIndexAddConst(
+            builder, loc, createIndexAdd(builder, loc, ctaBaseM, warpBaseM),
+            pack.rowBase);
+        Value colBase = createIndexAddConst(
+            builder, loc, createIndexAdd(builder, loc, ctaBaseN, warpBaseN),
+            pack.colBase);
+        if (contract.cStoreViaAtomicAdd) {
+          storeDirectPackToGlobalRowsAtomicAdd(builder, loc, packValue, c,
+                                               rowBase, colBase, laneId,
+                                               *storePlan, *problemRows,
+                                               *problemCols);
+        } else {
+          storeDirectPackToGlobalRows(builder, loc, packValue, c, rowBase,
+                                      colBase, laneId, *storePlan);
+        }
+      }
+    }
+    return success();
+  };
+
+  if (contract.persistentEnabled) {
+    Value startProgram = gpu::BlockIdOp::create(builder, loc, gpu::Dimension::x);
+    Value totalPrograms = createIndexConstant(builder, loc, contract.totalPrograms);
+    Value loopStep =
+        createIndexConstant(builder, loc, contract.persistentResidentPrograms);
+    auto forOp = scf::ForOp::create(builder, loc, startProgram, totalPrograms,
+                                    loopStep);
+    builder.setInsertionPointToStart(forOp.getBody());
+    if (failed(emitProgramInstance(forOp.getInductionVar())))
+      return failure();
+    gpu::BarrierOp::create(builder, loc);
+    builder.setInsertionPointAfter(forOp);
+  } else {
+    Value programId = gpu::BlockIdOp::create(builder, loc, gpu::Dimension::x);
+    if (failed(emitProgramInstance(programId)))
+      return failure();
   }
 
   gpu::ReturnOp::create(builder, loc);
@@ -2150,7 +2617,8 @@ public:
   void getDependentDialects(DialectRegistry &registry) const override {
     registry.insert<arith::ArithDialect, func::FuncDialect, gpu::GPUDialect,
                     memref::MemRefDialect, nvgpu::NVGPUDialect,
-                    NVVM::NVVMDialect, vector::VectorDialect>();
+                    NVVM::NVVMDialect, scf::SCFDialect,
+                    vector::VectorDialect>();
   }
 
   void runOnOperation() final {
@@ -2176,11 +2644,15 @@ public:
           validateLoweringContract(contract->kernel, contract->target,
                                    contract->semantics,
                                    contract->programMapping,
+                                   contract->reduction,
+                                   contract->persistentWork,
                                    contract->pipelineReady,
                                    contract->encodings, contract->transport,
                                    contract->rewrite,
                                    contract->accumulator,
                                    contract->epilogue,
+                                   contract->epilogueReorder,
+                                   contract->sharedWorkspace,
                                    contract->warpDecomposition,
                                    contract->resourceClosure,
                                    contract->buffers,
@@ -2190,15 +2662,6 @@ public:
         hadFailure = true;
         return;
       }
-      auto aSharedShape = getFlattenedSharedAllocShape(
-          contract->buffers, lowering->aSharedBacking, op.getOperation());
-      auto bSharedShape = getFlattenedSharedAllocShape(
-          contract->buffers, lowering->bSharedBacking, op.getOperation());
-      if (failed(aSharedShape) || failed(bSharedShape)) {
-        hadFailure = true;
-        return;
-      }
-
       std::string stem = makeKernelStem(op.getOperation(), kernelOrdinal++);
       std::string moduleName = stem + "_module";
       std::string kernelName = stem;
@@ -2207,18 +2670,6 @@ public:
 
       auto workgroupAddressSpace = gpu::AddressSpaceAttr::get(
           builder.getContext(), gpu::GPUDialect::getWorkgroupAddressSpace());
-      auto globalABacking =
-          findUniqueBacking(contract->buffers, BufferRole::OperandA,
-                            MemorySpace::Global, op.getOperation(),
-                            "kernel_global_operand_a");
-      auto globalBBacking =
-          findUniqueBacking(contract->buffers, BufferRole::OperandB,
-                            MemorySpace::Global, op.getOperation(),
-                            "kernel_global_operand_b");
-      auto globalCBacking =
-          findUniqueBacking(contract->buffers, BufferRole::Output,
-                            MemorySpace::Global, op.getOperation(),
-                            "kernel_global_output_c");
       auto sharedABacking =
           findUniqueBacking(contract->buffers, BufferRole::OperandA,
                             MemorySpace::Shared, op.getOperation(),
@@ -2227,9 +2678,7 @@ public:
           findUniqueBacking(contract->buffers, BufferRole::OperandB,
                             MemorySpace::Shared, op.getOperation(),
                             "kernel_shared_operand_b");
-      if (failed(globalABacking) || failed(globalBBacking) ||
-          failed(globalCBacking) || failed(sharedABacking) ||
-          failed(sharedBBacking)) {
+      if (failed(sharedABacking) || failed(sharedBBacking)) {
         hadFailure = true;
         return;
       }
@@ -2240,27 +2689,6 @@ public:
         hadFailure = true;
         return;
       }
-      auto globalADesc =
-          getMemDescType((*globalABacking)->descType, op.getOperation(),
-                         "global_operand_a");
-      auto globalBDesc =
-          getMemDescType((*globalBBacking)->descType, op.getOperation(),
-                         "global_operand_b");
-      auto globalCDesc =
-          getMemDescType((*globalCBacking)->descType, op.getOperation(),
-                         "global_output_c");
-      auto sharedADesc =
-          getMemDescType((*sharedABacking)->descType, op.getOperation(),
-                         "shared_operand_a");
-      auto sharedBDesc =
-          getMemDescType((*sharedBBacking)->descType, op.getOperation(),
-                         "shared_operand_b");
-      if (failed(globalADesc) || failed(globalBDesc) || failed(globalCDesc) ||
-          failed(sharedADesc) || failed(sharedBDesc)) {
-        hadFailure = true;
-        return;
-      }
-
       auto aType = dyn_cast<MemRefType>(op.getA().getType());
       auto bType = dyn_cast<MemRefType>(op.getB().getType());
       auto cType = dyn_cast<MemRefType>(op.getC().getType());
@@ -2270,21 +2698,10 @@ public:
         hadFailure = true;
         return;
       }
-      MemRefType aSharedType = MemRefType::get(
-          {(*aSharedShape)[0], (*aSharedShape)[1]}, sharedADesc->getElementType(),
-          AffineMap(), workgroupAddressSpace);
-      MemRefType bSharedType = MemRefType::get(
-          {(*bSharedShape)[0], (*bSharedShape)[1]}, sharedBDesc->getElementType(),
-          AffineMap(), workgroupAddressSpace);
-      SmallVector<Type, 3> workgroupTypes{aSharedType, bSharedType};
-      if (lowering->cUseSharedPackForInit || lowering->cUseSharedPackForStore) {
-        MemRefType cSharedPackType = MemRefType::get(
-            {lowering->numWarps, lowering->cSharedPackSlots,
-             lowering->cSharedTileRows,
-             lowering->cSharedTileCols},
-            cType.getElementType(), AffineMap(), builder.getI64IntegerAttr(3));
-        workgroupTypes.push_back(cSharedPackType);
-      }
+      MemRefType workspaceType = MemRefType::get(
+          {lowering->workspaceTotalBytes}, builder.getI8Type(), AffineMap(),
+          workgroupAddressSpace);
+      SmallVector<Type, 1> workgroupTypes{workspaceType};
 
       builder.setInsertionPointToStart(gpuModule.getBody());
       auto gpuFunc = gpu::GPUFuncOp::create(

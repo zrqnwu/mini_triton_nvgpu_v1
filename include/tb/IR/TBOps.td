@@ -142,7 +142,8 @@ def TB_EpilogueGlobalVectorLoadOp
     Index:$row,
     Index:$col,
     I64Attr:$vector_width,
-    BoolAttr:$boundary_aware
+    BoolAttr:$boundary_aware,
+    BoolAttr:$scalar_tail
   );
 
   let results = (outs
@@ -170,7 +171,8 @@ def TB_EpilogueGlobalVectorStoreOp : TB_Op<"epilogue_global_vector_store"> {
     Index:$row,
     Index:$col,
     I64Attr:$vector_width,
-    BoolAttr:$boundary_aware
+    BoolAttr:$boundary_aware,
+    BoolAttr:$scalar_tail
   );
 
   let assemblyFormat = [{

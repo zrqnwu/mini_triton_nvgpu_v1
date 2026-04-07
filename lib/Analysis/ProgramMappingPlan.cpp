@@ -91,6 +91,35 @@ static FailureOr<int64_t> readOptionalModuleI64Attr(Operation *op, StringRef nam
   return defaultValue;
 }
 
+static FailureOr<bool> readOptionalModuleBoolAttr(Operation *op, StringRef name,
+                                                  bool defaultValue) {
+  auto module = op->getParentOfType<ModuleOp>();
+  if (!module)
+    return defaultValue;
+  if (auto attr = dyn_cast_or_null<BoolAttr>(module->getAttr(name)))
+    return attr.getValue();
+  if (module->hasAttr(name)) {
+    op->emitError() << "module attr `" << name << "` must be a bool attribute";
+    return failure();
+  }
+  return defaultValue;
+}
+
+static FailureOr<std::string> readOptionalModuleStringAttr(Operation *op,
+                                                           StringRef name,
+                                                           StringRef defaultValue) {
+  auto module = op->getParentOfType<ModuleOp>();
+  if (!module)
+    return defaultValue.str();
+  if (auto attr = dyn_cast_or_null<StringAttr>(module->getAttr(name)))
+    return attr.getValue().str();
+  if (module->hasAttr(name)) {
+    op->emitError() << "module attr `" << name << "` must be a string attribute";
+    return failure();
+  }
+  return defaultValue.str();
+}
+
 static StringRef stringifyProgramMappingKind(ProgramMappingKind kind) {
   switch (kind) {
   case ProgramMappingKind::Tile:
@@ -258,7 +287,37 @@ static LogicalResult validateProgramMappingPlan(const ProgramMappingPlan &plan,
     }
     break;
   case ProgramMappingKind::SplitK:
+    if (plan.splitK <= 1 || plan.persistent ||
+        plan.reductionMode == ReductionMode::None ||
+        plan.programsPerTile != plan.splitK ||
+        plan.groupM != 1 ||
+        plan.groupTileSpanM != 1 ||
+        plan.groupTileSpanN != plan.problemTilesN * plan.splitK ||
+        plan.programsPerLaunchGroup != plan.groupTileSpanN ||
+        plan.launchOrder != ProgramLaunchOrder::RowMajor ||
+        plan.swizzleKind != ProgramSwizzleKind::None ||
+        plan.launchGroupCount != plan.problemTilesM ||
+        plan.totalPrograms !=
+            plan.problemTilesM * plan.problemTilesN * plan.splitK) {
+      return op->emitError()
+             << "split_k mapping contract is inconsistent with its launch formula";
+    }
+    break;
   case ProgramMappingKind::PersistentTile:
+    if (!plan.persistent || plan.splitK != 1 ||
+        plan.reductionMode != ReductionMode::None ||
+        plan.programsPerTile != 1 || plan.groupM != 1 ||
+        plan.groupTileSpanM != 1 ||
+        plan.groupTileSpanN != plan.problemTilesN ||
+        plan.programsPerLaunchGroup != plan.groupTileSpanN ||
+        plan.launchOrder != ProgramLaunchOrder::Persistent ||
+        plan.swizzleKind != ProgramSwizzleKind::None ||
+        plan.launchGroupCount != plan.problemTilesM ||
+        plan.totalPrograms != plan.problemTilesM * plan.problemTilesN ||
+        plan.numCTAs > plan.totalPrograms) {
+      return op->emitError()
+             << "persistent_tile mapping contract is inconsistent with its work formula";
+    }
     break;
   }
   return success();
@@ -270,8 +329,19 @@ FailureOr<ProgramMappingPlan>
 mlir::tb::deriveProgramMappingPlan(const KernelConfig &config,
                                    const TargetInfo &target, Operation *op) {
   auto requestedNumCTAs = readOptionalModuleI64Attr(op, kTBNumCTAsAttrName, 1);
+  auto requestedSplitK = readOptionalModuleI64Attr(op, kTBSplitKModuleAttrName, 1);
+  auto requestedPersistent =
+      readOptionalModuleBoolAttr(op, kTBPersistentModuleAttrName, false);
+  auto requestedProgramsPerTile = readOptionalModuleI64Attr(
+      op, kTBProgramsPerTileModuleAttrName, 0);
+  auto requestedReductionMode =
+      readOptionalModuleStringAttr(op, kTBReductionModeModuleAttrName, "");
   if (failed(requestedNumCTAs))
     return failure();
+  if (failed(requestedSplitK) || failed(requestedPersistent) ||
+      failed(requestedProgramsPerTile) || failed(requestedReductionMode)) {
+    return failure();
+  }
 
   ProgramMappingPlan plan;
   plan.problemTilesM = ceilDiv(config.problemM, config.blockM);
@@ -286,8 +356,8 @@ mlir::tb::deriveProgramMappingPlan(const KernelConfig &config,
   plan.programsPerLaunchGroup = plan.groupTileSpanM * plan.groupTileSpanN;
   plan.launchGroupCount = plan.problemTilesM;
   plan.totalPrograms = plan.problemTilesM * plan.problemTilesN;
-  plan.splitK = 1;
-  plan.persistent = false;
+  plan.splitK = std::max<int64_t>(*requestedSplitK, 1);
+  plan.persistent = *requestedPersistent;
   plan.programsPerTile = 1;
   plan.numCTAs = *requestedNumCTAs;
   plan.ctasPerCGA = {plan.numCTAs, 1, 1};
@@ -298,13 +368,59 @@ mlir::tb::deriveProgramMappingPlan(const KernelConfig &config,
     op->emitError() << "program mapping requires positive tile coverage on M/N/K";
     return failure();
   }
+  if (plan.splitK <= 0) {
+    op->emitError() << "module attr `" << kTBSplitKModuleAttrName
+                    << "` must be positive";
+    return failure();
+  }
+  if (plan.persistent && plan.splitK != 1) {
+    op->emitError() << "stage1 does not allow persistent and split-k in the same "
+                       "program mapping contract yet";
+    return failure();
+  }
+  if (plan.numCTAs <= 0) {
+    op->emitError() << "module attr `" << kTBNumCTAsAttrName
+                    << "` must be positive";
+    return failure();
+  }
+  if (*requestedProgramsPerTile > 0)
+    plan.programsPerTile = *requestedProgramsPerTile;
+
   if (plan.persistent) {
     plan.mappingKind = ProgramMappingKind::PersistentTile;
     plan.launchOrder = ProgramLaunchOrder::Persistent;
+    plan.swizzleKind = ProgramSwizzleKind::None;
+    plan.groupM = 1;
+    plan.groupTileSpanM = 1;
+    plan.groupTileSpanN = plan.problemTilesN;
+    plan.programsPerLaunchGroup = plan.groupTileSpanN;
+    plan.launchGroupCount = plan.problemTilesM;
+    plan.totalPrograms = plan.problemTilesM * plan.problemTilesN;
+    plan.programsPerTile = 1;
+    plan.reductionMode = ReductionMode::None;
+    plan.numCTAs = std::min<int64_t>(plan.numCTAs, plan.totalPrograms);
   } else if (plan.splitK > 1) {
     plan.mappingKind = ProgramMappingKind::SplitK;
     plan.launchOrder = ProgramLaunchOrder::RowMajor;
-    plan.reductionMode = ReductionMode::SplitKSerial;
+    plan.swizzleKind = ProgramSwizzleKind::None;
+    plan.groupM = 1;
+    plan.groupTileSpanM = 1;
+    plan.groupTileSpanN = plan.problemTilesN * plan.splitK;
+    plan.programsPerLaunchGroup = plan.groupTileSpanN;
+    plan.launchGroupCount = plan.problemTilesM;
+    plan.totalPrograms = plan.problemTilesM * plan.problemTilesN * plan.splitK;
+    plan.programsPerTile = plan.splitK;
+    if (requestedReductionMode->empty() ||
+        *requestedReductionMode == "split_k_serial") {
+      plan.reductionMode = ReductionMode::SplitKSerial;
+    } else if (*requestedReductionMode == "split_k_parallel") {
+      plan.reductionMode = ReductionMode::SplitKParallel;
+    } else {
+      op->emitError()
+          << "module attr `" << kTBReductionModeModuleAttrName
+          << "` must be `split_k_serial` or `split_k_parallel`";
+      return failure();
+    }
   } else if (plan.groupM > 1 && plan.problemTilesM > 1 &&
              plan.problemTilesN > 1) {
     plan.mappingKind = ProgramMappingKind::GroupedTile;
@@ -330,6 +446,10 @@ mlir::tb::deriveProgramMappingPlan(const KernelConfig &config,
   if (target.numSms > 0 && config.numWarps > target.maxWarpsPerCTA) {
     op->emitError() << "num_warps exceeds target max warps per CTA";
     return failure();
+  }
+  if (plan.persistent && target.numSms > 0 && plan.numCTAs > target.numSms) {
+    plan.numCTAs = target.numSms;
+    plan.ctasPerCGA = {plan.numCTAs, 1, 1};
   }
 
   if (failed(validateProgramMappingPlan(plan, op)))

@@ -1,9 +1,15 @@
 #include "tb/Analysis/AccumulatorPlan.h"
 #include "tb/Analysis/EpiloguePlan.h"
+#include "tb/Analysis/EpilogueReorderPlan.h"
 #include "tb/Analysis/EncodingPlan.h"
 #include "tb/Analysis/KernelConfig.h"
+#include "tb/Analysis/PersistentWorkPlan.h"
+#include "tb/Analysis/ProgramMappingPlan.h"
+#include "tb/Analysis/ReductionPlan.h"
 #include "tb/Analysis/ResourceClosurePlan.h"
+#include "tb/Analysis/SharedWorkspacePlan.h"
 #include "tb/Analysis/TargetInfo.h"
+#include "tb/Analysis/TransportPlan.h"
 #include "tb/Analysis/WarpDecompositionPlan.h"
 #include "tb/IR/TBOps.h"
 #include "tb/Transforms/Passes.h"
@@ -47,6 +53,15 @@ public:
         hadFailure = true;
         return;
       }
+      auto transport = parseTransportPlanAttr(op.getOperation());
+      auto programMapping = parseProgramMappingPlanAttr(op.getOperation());
+      auto reduction = parseReductionPlanAttr(op.getOperation());
+      auto persistentWork = parsePersistentWorkPlanAttr(op.getOperation());
+      if (failed(transport) || failed(programMapping) || failed(reduction) ||
+          failed(persistentWork)) {
+        hadFailure = true;
+        return;
+      }
       auto accumulator =
           deriveAccumulatorPlan(*config, *target, *encodings, op.getOperation());
       if (failed(accumulator)) {
@@ -56,6 +71,12 @@ public:
       auto epilogue = deriveEpiloguePlan(*config, *target, *encodings,
                                          *accumulator, op.getOperation());
       if (failed(epilogue)) {
+        hadFailure = true;
+        return;
+      }
+      auto epilogueReorder = deriveEpilogueReorderPlan(
+          *config, *target, *accumulator, *epilogue, op.getOperation());
+      if (failed(epilogueReorder)) {
         hadFailure = true;
         return;
       }
@@ -75,16 +96,24 @@ public:
           }
         }
       }
-      auto warpPlan = deriveWarpDecompositionPlan(*config, *encodings,
-                                                  *accumulator, *epilogue,
-                                                  op.getOperation());
+      auto warpPlan = deriveWarpDecompositionPlan(
+          *config, *encodings, *accumulator, *epilogue, *epilogueReorder,
+          *reduction, *persistentWork, op.getOperation());
       if (failed(warpPlan)) {
         hadFailure = true;
         return;
       }
+      auto sharedWorkspace = deriveSharedWorkspacePlan(
+          *config, *target, *encodings, *transport, *epilogueReorder,
+          *reduction, *persistentWork, op.getOperation());
+      if (failed(sharedWorkspace)) {
+        hadFailure = true;
+        return;
+      }
       auto resourcePlan = deriveResourceClosurePlan(
-          *config, *target, *encodings, *accumulator, *epilogue, *warpPlan,
-          op.getOperation());
+          *config, *target, *programMapping, *reduction, *persistentWork,
+          *encodings, *transport, *accumulator, *epilogue, *epilogueReorder,
+          *sharedWorkspace, *warpPlan, op.getOperation());
       if (failed(resourcePlan)) {
         hadFailure = true;
         return;
@@ -94,6 +123,10 @@ public:
       op->setAttr("tb.accumulator_plan",
                   buildAccumulatorPlanAttr(builder, *accumulator));
       op->setAttr("tb.epilogue_plan", buildEpiloguePlanAttr(builder, *epilogue));
+      op->setAttr("tb.epilogue_reorder_plan",
+                  buildEpilogueReorderPlanAttr(builder, *epilogueReorder));
+      op->setAttr("tb.shared_workspace_plan",
+                  buildSharedWorkspacePlanAttr(builder, *sharedWorkspace));
       op->setAttr("tb.warp_decomposition_plan",
                   buildWarpDecompositionPlanAttr(builder, *warpPlan));
       op->setAttr("tb.resource_closure_plan",

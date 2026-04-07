@@ -28,6 +28,7 @@ enum class TargetLandingKind {
   None,
   RegisterPackGlobalVector,
   SharedPackThenGlobalVector,
+  SharedRelayThenGlobalVector,
 };
 
 struct DirectGlobalVectorPlan {

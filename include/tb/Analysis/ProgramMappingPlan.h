@@ -11,6 +11,11 @@
 
 namespace mlir::tb {
 
+inline constexpr char kTBSplitKModuleAttrName[] = "tb.split-k";
+inline constexpr char kTBPersistentModuleAttrName[] = "tb.persistent";
+inline constexpr char kTBProgramsPerTileModuleAttrName[] = "tb.programs-per-tile";
+inline constexpr char kTBReductionModeModuleAttrName[] = "tb.reduction-mode";
+
 enum class ProgramMappingKind {
   Tile,
   GroupedTile,

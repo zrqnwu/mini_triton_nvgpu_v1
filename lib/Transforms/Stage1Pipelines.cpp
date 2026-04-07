@@ -36,6 +36,7 @@ static void buildTBStage1MainlinePipeline(
   pm.addPass(mlir::tb::createTBDeriveWaits());
   pm.addPass(mlir::tb::createTBExpandPipeline());
   pm.addPass(mlir::tb::createTBCleanupPipeline());
+  pm.addPass(mlir::tb::createTBVerifyPipelineMainlineContract());
   pm.addPass(mlir::tb::createTBLowerPipelineToNVGPU());
 }
 
@@ -48,6 +49,7 @@ static void buildTBStage1NVVMSinkPipeline(
   // 这里不能再先走 vector-to-scf，否则会把已经对齐的 v4 global path
   // 提前 scalarize 成大量标量 load/store。
   pm.addPass(createConvertVectorToLLVMPass());
+  pm.addPass(createSCFToControlFlowPass());
   pm.addPass(createReconcileUnrealizedCastsPass());
   pm.addPass(createConvertNVVMToLLVMPass());
   pm.addPass(createConvertFuncToLLVMPass());
@@ -65,7 +67,6 @@ static void buildTBStage1NVVMSinkPipeline(
   ConvertIndexToLLVMPassOptions convertIndexToLLVMPassOpt;
   convertIndexToLLVMPassOpt.indexBitwidth = options.indexBitWidth;
   pm.addPass(createConvertIndexToLLVMPass(convertIndexToLLVMPassOpt));
-  pm.addPass(createFinalizeMemRefToLLVMConversionPass());
   pm.addPass(createCanonicalizerPass());
   pm.addPass(createCSEPass());
 

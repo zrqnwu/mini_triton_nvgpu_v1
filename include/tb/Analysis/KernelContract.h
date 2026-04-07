@@ -6,14 +6,18 @@
 #include "tb/Analysis/BufferModel.h"
 #include "tb/Analysis/EncodingPlan.h"
 #include "tb/Analysis/EpiloguePlan.h"
+#include "tb/Analysis/EpilogueReorderPlan.h"
 #include "tb/Analysis/KernelConfig.h"
 #include "tb/Analysis/MatmulSemantics.h"
 #include "tb/Analysis/MatmulRewritePlan.h"
 #include "tb/Analysis/PipelineExpansion.h"
 #include "tb/Analysis/PipelinePlan.h"
 #include "tb/Analysis/PipelineReady.h"
+#include "tb/Analysis/PersistentWorkPlan.h"
 #include "tb/Analysis/ProgramMappingPlan.h"
+#include "tb/Analysis/ReductionPlan.h"
 #include "tb/Analysis/ResourceClosurePlan.h"
+#include "tb/Analysis/SharedWorkspacePlan.h"
 #include "tb/Analysis/TargetInfo.h"
 #include "tb/Analysis/TransportPlan.h"
 #include "tb/Analysis/WarpDecompositionPlan.h"
@@ -29,6 +33,8 @@ struct KernelContract {
   MatmulSemantics semantics;
   TargetInfo target;
   ProgramMappingPlan programMapping;
+  ReductionPlan reduction;
+  PersistentWorkPlan persistentWork;
   EncodingPlan encodings;
   TransportPlan transport;
   MatmulRewritePlan rewrite;
@@ -37,6 +43,8 @@ struct KernelContract {
   AsyncPlan async;
   AccumulatorPlan accumulator;
   EpiloguePlan epilogue;
+  EpilogueReorderPlan epilogueReorder;
+  SharedWorkspacePlan sharedWorkspace;
   WarpDecompositionPlan warpDecomposition;
   ResourceClosurePlan resourceClosure;
 };

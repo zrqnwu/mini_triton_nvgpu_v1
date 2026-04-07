@@ -1,0 +1,82 @@
+rounds=5 warmup=500 iters=20000
+gpu_before={'pstate': 'P0', 'sm_clock_mhz': 1470, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 54}
+gpu_after_preheat={'pstate': 'P0', 'sm_clock_mhz': 1965, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 56}
+
+preheat=128x128x64 status=hot target_floor=1890MHz attempts=1
+
+===== 64x64x32 =====
+mini median_ns=3341.08 (mean=3439.87, min=3197.08, max=3786.04, spread=17.63%)
+triton median_ns=4001.17 (mean=4046.21, min=3669.18, max=4474.89, spread=20.14%)
+mini median_gflops=78.47 triton median_gflops=65.67
+mini 快 19.76%
+mini_vs_triton=119.76%
+gpu_case=before={'pstate': 'P0', 'sm_clock_mhz': 1957, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 61} after={'pstate': 'P0', 'sm_clock_mhz': 1875, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 60}
+measurement=unstable (threshold=10.00%, total_rounds=10)
+
+===== 64x128x32 =====
+mini median_ns=3100.89 (mean=3112.24, min=3079.53, max=3143.88, spread=2.08%)
+triton median_ns=4105.37 (mean=4086.44, min=4027.29, max=4108.44, spread=1.98%)
+mini median_gflops=169.08 triton median_gflops=127.71
+mini 快 32.39%
+mini_vs_triton=132.39%
+gpu_case=before={'pstate': 'P0', 'sm_clock_mhz': 1965, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 59} after={'pstate': 'P0', 'sm_clock_mhz': 1965, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 60}
+case_preheat=128x128x64 reached_hot_clock=True attempts=1
+
+===== 128x64x32 =====
+mini median_ns=3134.21 (mean=3137.99, min=3118.59, max=3168.70, spread=1.60%)
+triton median_ns=4079.26 (mean=4091.78, min=4059.96, max=4139.01, spread=1.94%)
+mini median_gflops=167.28 triton median_gflops=128.53
+mini 快 30.15%
+mini_vs_triton=130.15%
+gpu_case=before={'pstate': 'P0', 'sm_clock_mhz': 1965, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 60} after={'pstate': 'P0', 'sm_clock_mhz': 1957, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 60}
+
+===== 64x64x64 =====
+mini median_ns=4503.03 (mean=4489.10, min=4452.45, max=4525.04, spread=1.61%)
+triton median_ns=5087.79 (mean=5101.25, min=5079.40, max=5134.03, spread=1.07%)
+mini median_gflops=116.43 triton median_gflops=103.05
+mini 快 12.99%
+mini_vs_triton=112.99%
+gpu_case=before={'pstate': 'P0', 'sm_clock_mhz': 1957, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 60} after={'pstate': 'P0', 'sm_clock_mhz': 1957, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 61}
+
+===== 128x128x32 =====
+mini median_ns=4469.56 (mean=4479.99, min=4449.23, max=4511.59, spread=1.40%)
+triton median_ns=6000.59 (mean=5979.51, min=5937.20, max=6002.94, spread=1.10%)
+mini median_gflops=234.60 triton median_gflops=174.75
+mini 快 34.25%
+mini_vs_triton=134.25%
+gpu_case=before={'pstate': 'P0', 'sm_clock_mhz': 1965, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 58} after={'pstate': 'P0', 'sm_clock_mhz': 1965, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 59}
+case_preheat=128x128x64 reached_hot_clock=True attempts=1
+
+===== 128x128x64 =====
+mini median_ns=6149.27 (mean=6144.45, min=6108.72, max=6172.77, spread=1.04%)
+triton median_ns=7744.25 (mean=7744.63, min=7729.05, max=7769.79, spread=0.53%)
+mini median_gflops=341.04 triton median_gflops=270.80
+mini 快 25.94%
+mini_vs_triton=125.94%
+gpu_case=before={'pstate': 'P0', 'sm_clock_mhz': 1965, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 56} after={'pstate': 'P0', 'sm_clock_mhz': 1965, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 58}
+
+===== 96x80x32_general =====
+mini median_ns=4143.04 (mean=4139.00, min=4123.55, max=4143.67, spread=0.49%)
+triton median_ns=5005.82 (mean=4991.57, min=4959.13, max=5018.73, spread=1.19%)
+mini median_gflops=118.64 triton median_gflops=98.19
+mini 快 20.82%
+mini_vs_triton=120.82%
+gpu_case=before={'pstate': 'P0', 'sm_clock_mhz': 1957, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 61} after={'pstate': 'P0', 'sm_clock_mhz': 1957, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 61}
+
+===== 192x128x32_grouped =====
+mini median_ns=3098.93 (mean=2930.10, min=2468.36, max=3173.27, spread=22.75%)
+triton median_ns=3724.35 (mean=3591.95, min=2890.70, max=3914.31, spread=27.48%)
+mini median_gflops=507.59 triton median_gflops=422.35
+mini 快 20.18%
+mini_vs_triton=120.18%
+gpu_case=before={'pstate': 'P0', 'sm_clock_mhz': 1965, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 58} after={'pstate': 'P0', 'sm_clock_mhz': 1470, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 56}
+measurement=unstable (threshold=10.00%, total_rounds=10)
+
+===== 160x96x32_general =====
+mini median_ns=3631.59 (mean=3518.18, min=2917.99, max=3967.95, spread=28.91%)
+triton median_ns=3674.75 (mean=3554.51, min=2951.42, max=3823.10, spread=23.72%)
+mini median_gflops=270.69 triton median_gflops=267.51
+mini 快 1.19%
+mini_vs_triton=101.19%
+gpu_case=before={'pstate': 'P0', 'sm_clock_mhz': 1965, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 59} after={'pstate': 'P0', 'sm_clock_mhz': 1575, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 58}
+measurement=unstable (threshold=10.00%, total_rounds=10)

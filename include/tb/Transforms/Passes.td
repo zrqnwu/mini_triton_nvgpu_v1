@@ -49,8 +49,10 @@ def TBBuildProgramMappingPlan
   let description = [{
     Builds `tb.program_mapping_plan` from `tb.matmul`, `KernelConfig` and
     `TargetInfo`. This contract owns program-to-tile mapping, launch order,
-    grouped launch / split-k / persistent placeholders, but does not own CTA
-    internal scheduling.
+    grouped launch / split-k / persistent owner truth, but does not own CTA
+    internal scheduling. The pass also materializes `tb.reduction_plan` and
+    `tb.persistent_work_plan` so later stages do not have to infer inter-program
+    reduction or persistent tile-fetch behavior from booleans alone.
   }];
 }
 
@@ -178,6 +180,18 @@ def TBCleanupPipeline
     IR owner as a stage/cluster-ordered async/wait/mma cluster stream, removes
     temporary rewrite-only attrs, and emits a compact `tb.pipeline_ready`
     summary for lowering.
+  }];
+}
+
+def TBVerifyPipelineMainlineContract
+    : Pass<"tb-verify-pipeline-mainline-contract", "::mlir::ModuleOp"> {
+  let summary = "Verify the explicit tb.pipeline_mainline lowering contract";
+  let description = [{
+    Validates that `tb.pipeline_mainline` plus the public stage1 contracts
+    already describe a complete, internally consistent lowering boundary before
+    `tb-lower-pipeline-to-nvgpu`. This pass checks explicit cluster coverage,
+    async group/wait ownership, and `tb.pipeline_ready` agreement so target
+    lowering does not have to diagnose broken mainline contracts late.
   }];
 }
 

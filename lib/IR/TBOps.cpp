@@ -188,6 +188,8 @@ LogicalResult PipelineMainlineOp::verify() {
     return failure();
   for (StringRef attrName : {"tb.semantic_matmul",
                              "tb.program_mapping_plan",
+                             "tb.reduction_plan",
+                             "tb.persistent_work_plan",
                              "tb.encoding_plan", "tb.transport_plan",
                              "tb.accumulator_plan",
                              "tb.matmul_rewrite",
@@ -299,13 +301,29 @@ LogicalResult MmaComputeClusterOp::verify() {
 }
 
 LogicalResult EpilogueGlobalVectorLoadOp::verify() {
-  return verifyEpilogueVectorAccess(getSource(), getResult().getType(),
-                                    getVectorWidth(), getOperation(), "load");
+  if (failed(verifyEpilogueVectorAccess(getSource(), getResult().getType(),
+                                        getVectorWidth(), getOperation(),
+                                        "load"))) {
+    return failure();
+  }
+  if (getScalarTail() && !getBoundaryAware()) {
+    return emitOpError()
+           << "scalar_tail only makes sense on a boundary-aware load";
+  }
+  return success();
 }
 
 LogicalResult EpilogueGlobalVectorStoreOp::verify() {
-  return verifyEpilogueVectorAccess(getDest(), getValue().getType(),
-                                    getVectorWidth(), getOperation(), "store");
+  if (failed(verifyEpilogueVectorAccess(getDest(), getValue().getType(),
+                                        getVectorWidth(), getOperation(),
+                                        "store"))) {
+    return failure();
+  }
+  if (getScalarTail() && !getBoundaryAware()) {
+    return emitOpError()
+           << "scalar_tail only makes sense on a boundary-aware store";
+  }
+  return success();
 }
 
 #define GET_OP_CLASSES

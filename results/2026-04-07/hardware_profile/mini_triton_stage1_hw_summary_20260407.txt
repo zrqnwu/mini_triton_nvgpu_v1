@@ -1,0 +1,76 @@
+NCU key metrics
+[160x96_mini]
+gpu__time_duration.sum=4160
+sm__throughput.avg.pct_of_peak_sustained_elapsed=4.21
+dram__throughput.avg.pct_of_peak_sustained_elapsed=1.98
+sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active=6.74
+smsp__inst_executed_pipe_tensor.sum=384
+smsp__warps_active.avg.per_cycle_active=1
+smsp__warps_eligible.avg.per_cycle_active=0.10
+smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio=2.86
+smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio=1.06
+smsp__average_warps_issue_stalled_wait_per_issue_active.ratio=1.16
+launch__registers_per_thread=90
+launch__shared_mem_per_block_static=8192
+launch__shared_mem_per_block_dynamic=0
+
+[160x96_triton]
+gpu__time_duration.sum=4064
+sm__throughput.avg.pct_of_peak_sustained_elapsed=4.41
+dram__throughput.avg.pct_of_peak_sustained_elapsed=1.80
+sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active=6.87
+smsp__inst_executed_pipe_tensor.sum=384
+smsp__warps_active.avg.per_cycle_active=1
+smsp__warps_eligible.avg.per_cycle_active=0.12
+smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio=1.72
+smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio=1.27
+smsp__average_warps_issue_stalled_wait_per_issue_active.ratio=1.44
+launch__registers_per_thread=122
+launch__shared_mem_per_block_static=0
+launch__shared_mem_per_block_dynamic=8704
+
+[96x80_mini]
+gpu__time_duration.sum=5984
+sm__throughput.avg.pct_of_peak_sustained_elapsed=1.76
+dram__throughput.avg.pct_of_peak_sustained_elapsed=1.88
+sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active=4.30
+smsp__inst_executed_pipe_tensor.sum=256
+smsp__warps_active.avg.per_cycle_active=1
+smsp__warps_eligible.avg.per_cycle_active=0.16
+smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio=0.82
+smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio=0.06
+smsp__average_warps_issue_stalled_wait_per_issue_active.ratio=1.59
+launch__registers_per_thread=255
+launch__shared_mem_per_block_static=8192
+launch__shared_mem_per_block_dynamic=0
+
+[96x80_triton]
+gpu__time_duration.sum=6720
+sm__throughput.avg.pct_of_peak_sustained_elapsed=1.95
+dram__throughput.avg.pct_of_peak_sustained_elapsed=4.90
+sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active=3.30
+smsp__inst_executed_pipe_tensor.sum=256
+smsp__warps_active.avg.per_cycle_active=1
+smsp__warps_eligible.avg.per_cycle_active=0.18
+smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio=0.61
+smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio=0.32
+smsp__average_warps_issue_stalled_wait_per_issue_active.ratio=1.81
+launch__registers_per_thread=255
+launch__shared_mem_per_block_static=0
+launch__shared_mem_per_block_dynamic=8192
+
+Large shape benchmark
+[256x256x64]
+mini_median_ns=6251.85 spread=9.78% gflops=1341.78
+triton_median_ns=7990.13 spread=27.51% gflops=1049.87
+mini 快 27.80%
+
+[256x256x128]
+mini_median_ns=12170.40 spread=0.03% gflops=1378.53
+triton_median_ns=13585.50 spread=0.20% gflops=1234.94
+mini 快 11.63%
+
+[320x224x64_general]
+mini_median_ns=5424.57 spread=0.06% gflops=1691.39
+triton_median_ns=6534.27 spread=0.73% gflops=1404.14
+mini 快 20.46%

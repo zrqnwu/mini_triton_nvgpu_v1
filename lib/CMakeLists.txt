@@ -7,10 +7,14 @@ add_mlir_dialect_library(MLIRMiniTritonTB
   Analysis/TargetInfo.cpp
   Analysis/MatmulSemantics.cpp
   Analysis/ProgramMappingPlan.cpp
+  Analysis/ReductionPlan.cpp
+  Analysis/PersistentWorkPlan.cpp
   Analysis/EncodingPlan.cpp
   Analysis/TransportPlan.cpp
   Analysis/AccumulatorPlan.cpp
   Analysis/EpiloguePlan.cpp
+  Analysis/EpilogueReorderPlan.cpp
+  Analysis/SharedWorkspacePlan.cpp
   Analysis/WarpDecompositionPlan.cpp
   Analysis/ResourceClosurePlan.cpp
   Analysis/MatmulRewritePlan.cpp
@@ -38,6 +42,7 @@ add_mlir_dialect_library(MLIRMiniTritonTB
   Transforms/DeriveWaits.cpp
   Transforms/ExpandPipeline.cpp
   Transforms/CleanupPipeline.cpp
+  Transforms/VerifyPipelineMainlineContract.cpp
   Transforms/LowerPipelineToNVGPU.cpp
   Transforms/LowerEpilogueVectorIO.cpp
   Transforms/Stage1Pipelines.cpp

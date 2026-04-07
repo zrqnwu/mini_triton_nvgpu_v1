@@ -1,0 +1,7 @@
+{
+  "kernel_name": "matmul_kernel",
+  "shared": 8704,
+  "num_warps": 4,
+  "exact_tile": false,
+  "group_m": 1
+}

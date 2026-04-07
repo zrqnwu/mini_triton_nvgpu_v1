@@ -1,0 +1,3544 @@
+{
+  "rounds": 5,
+  "warmup": 500,
+  "iters": 20000,
+  "gpu_state_before_all": {
+    "pstate": "P0",
+    "sm_clock_mhz": 1470,
+    "sm_clock_max_mhz": 2100,
+    "mem_clock_mhz": 7001,
+    "temperature_c": 54
+  },
+  "cases": [
+    {
+      "shape": "64x64x32",
+      "config": {
+        "m": 64,
+        "n": 64,
+        "k": 32,
+        "block_m": 64,
+        "block_n": 64,
+        "block_k": 32,
+        "num_warps": 1,
+        "num_stages": 2,
+        "exact_tile": true,
+        "group_m": 1,
+        "block_x": 32,
+        "grid_x": 1,
+        "cubin_format": "isa"
+      },
+      "gpu_state_before_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1957,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 61
+      },
+      "gpu_state_after_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1875,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 60
+      },
+      "case_preheat": null,
+      "mini": {
+        "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin",
+        "summary_ns": {
+          "min": 3197.08,
+          "median": 3341.08,
+          "max": 3786.04,
+          "mean": 3439.8720000000003,
+          "spread_pct": 17.627832916302513,
+          "stdev": 226.89934292055094
+        },
+        "summary_gflops": {
+          "min": 69.2397,
+          "median": 78.47355,
+          "max": 81.9948,
+          "mean": 76.50103,
+          "spread_pct": 16.254011702032084,
+          "stdev": 4.947268923142231
+        },
+        "attrs": {
+          "regs": 255,
+          "static_shared": 8192,
+          "max_threads": 256
+        },
+        "samples": [
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=3197.64\ngflops=81.9803\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3197.64,
+            "gflops": 81.9803,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=3197.08\ngflops=81.9948\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3197.08,
+            "gflops": 81.9948,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=3633.31\ngflops=72.1503\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3633.31,
+            "gflops": 72.1503,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=3268.97\ngflops=80.1917\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3268.97,
+            "gflops": 80.1917,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=3282.63\ngflops=79.8579\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3282.63,
+            "gflops": 79.8579,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=3298.61\ngflops=79.471\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3298.61,
+            "gflops": 79.471,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=3383.55\ngflops=77.4761\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3383.55,
+            "gflops": 77.4761,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=3660.85\ngflops=71.6074\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3660.85,
+            "gflops": 71.6074,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=3786.04\ngflops=69.2397\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3786.04,
+            "gflops": 69.2397,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=3690.04\ngflops=71.0411\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x32/64x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3690.04,
+            "gflops": 71.0411,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          }
+        ]
+      },
+      "triton": {
+        "binary": "/tmp/triton_exact_tile_64x64x32_real.cubin",
+        "kernel": "exact_tile_matmul_kernel",
+        "kind": "triton",
+        "shared_bytes": 12544,
+        "shared_source": "/tmp/triton_cache_20260331_current/Xo37VqbntYhdv4N6n5wnd58PwNPHHtQAf1xXp5G7ru0/matmul_exact_tile_kernel.json",
+        "summary_ns": {
+          "min": 3669.18,
+          "median": 4001.1749999999997,
+          "max": 4474.89,
+          "mean": 4046.2110000000002,
+          "spread_pct": 20.13683480477611,
+          "stdev": 331.7183594708018
+        },
+        "summary_gflops": {
+          "min": 58.5812,
+          "median": 65.66555,
+          "max": 71.4448,
+          "mean": 65.1771,
+          "spread_pct": 19.589571700838565,
+          "stdev": 5.28453824767227
+        },
+        "attrs": {
+          "regs": 252,
+          "static_shared": 0,
+          "max_threads": 256
+        },
+        "samples": [
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_64x64x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=12544\nattrs=regs:252 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=3701.86\ngflops=70.8141\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_64x64x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=12544",
+            "attrs": "regs:252 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3701.86,
+            "gflops": 70.8141,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 252,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_64x64x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=12544\nattrs=regs:252 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=3669.18\ngflops=71.4448\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_64x64x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=12544",
+            "attrs": "regs:252 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3669.18,
+            "gflops": 71.4448,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 252,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_64x64x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=12544\nattrs=regs:252 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4191.69\ngflops=62.5389\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_64x64x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=12544",
+            "attrs": "regs:252 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4191.69,
+            "gflops": 62.5389,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 252,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_64x64x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=12544\nattrs=regs:252 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4465.92\ngflops=58.6988\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_64x64x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=12544",
+            "attrs": "regs:252 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4465.92,
+            "gflops": 58.6988,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 252,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_64x64x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=12544\nattrs=regs:252 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=3794.59\ngflops=69.0837\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_64x64x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=12544",
+            "attrs": "regs:252 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3794.59,
+            "gflops": 69.0837,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 252,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_64x64x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=12544\nattrs=regs:252 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=3810.66\ngflops=68.7922\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_64x64x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=12544",
+            "attrs": "regs:252 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3810.66,
+            "gflops": 68.7922,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 252,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_64x64x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=12544\nattrs=regs:252 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=3757.2\ngflops=69.771\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_64x64x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=12544",
+            "attrs": "regs:252 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3757.2,
+            "gflops": 69.771,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 252,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_64x64x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=12544\nattrs=regs:252 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4474.89\ngflops=58.5812\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_64x64x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=12544",
+            "attrs": "regs:252 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4474.89,
+            "gflops": 58.5812,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 252,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_64x64x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=12544\nattrs=regs:252 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4396.39\ngflops=59.6271\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_64x64x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=12544",
+            "attrs": "regs:252 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4396.39,
+            "gflops": 59.6271,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 252,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_64x64x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=64x64x32\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=12544\nattrs=regs:252 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4199.73\ngflops=62.4192\nc00=640000\ncmid=6.96351e+08\nclast=2.62144e+09\nchecksum=2.75399e+12\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_64x64x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "64x64x32",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=12544",
+            "attrs": "regs:252 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4199.73,
+            "gflops": 62.4192,
+            "c00": 640000.0,
+            "cmid": 696351000.0,
+            "clast": 2621440000.0,
+            "checksum": 2753990000000.0,
+            "attrs_parsed": {
+              "regs": 252,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          }
+        ]
+      },
+      "comparison": {
+        "median_ns_delta": "mini 快 19.76%",
+        "mini_over_triton_median_pct": 119.75693488333113
+      },
+      "measurement": {
+        "unstable": true,
+        "unstable_spread_threshold": 10.0,
+        "extra_rounds_run": 5,
+        "total_rounds_run": 10
+      }
+    },
+    {
+      "shape": "64x128x32",
+      "config": {
+        "m": 64,
+        "n": 128,
+        "k": 32,
+        "block_m": 64,
+        "block_n": 128,
+        "block_k": 32,
+        "num_warps": 4,
+        "num_stages": 2,
+        "exact_tile": true,
+        "group_m": 1,
+        "block_x": 128,
+        "grid_x": 1,
+        "cubin_format": "isa"
+      },
+      "gpu_state_before_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1965,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 59
+      },
+      "gpu_state_after_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1965,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 60
+      },
+      "case_preheat": {
+        "enabled": true,
+        "heater_case": "128x128x64",
+        "attempts": [
+          {
+            "attempt": 1,
+            "before": {
+              "pstate": "P0",
+              "sm_clock_mhz": 1575,
+              "sm_clock_max_mhz": 2100,
+              "mem_clock_mhz": 7001,
+              "temperature_c": 57
+            },
+            "after": {
+              "pstate": "P0",
+              "sm_clock_mhz": 1965,
+              "sm_clock_max_mhz": 2100,
+              "mem_clock_mhz": 7001,
+              "temperature_c": 59
+            },
+            "mini_avg_ns": 7673.09,
+            "triton_avg_ns": 7728.38
+          }
+        ],
+        "target_floor_pct": 90.0,
+        "target_floor_mhz": 1890,
+        "reached_hot_clock": true
+      },
+      "mini": {
+        "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x128x32/64x128x32.mini.bin",
+        "summary_ns": {
+          "min": 3079.53,
+          "median": 3100.89,
+          "max": 3143.88,
+          "mean": 3112.236,
+          "spread_pct": 2.0752106653251134,
+          "stdev": 27.90876618555539
+        },
+        "summary_gflops": {
+          "min": 166.764,
+          "median": 169.077,
+          "max": 170.25,
+          "mean": 168.4712,
+          "spread_pct": 2.0617825014638242,
+          "stdev": 1.5095471837607446
+        },
+        "attrs": {
+          "regs": 130,
+          "static_shared": 12288,
+          "max_threads": 384
+        },
+        "samples": [
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x128x32/64x128x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:130 static_shared:12288 max_threads:384\niters=20000 warmup=500\navg_ns=3138.92\ngflops=167.028\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x128x32/64x128x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:130 static_shared:12288 max_threads:384",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3138.92,
+            "gflops": 167.028,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 130,
+              "static_shared": 12288,
+              "max_threads": 384
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x128x32/64x128x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:130 static_shared:12288 max_threads:384\niters=20000 warmup=500\navg_ns=3100.89\ngflops=169.077\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x128x32/64x128x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:130 static_shared:12288 max_threads:384",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3100.89,
+            "gflops": 169.077,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 130,
+              "static_shared": 12288,
+              "max_threads": 384
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x128x32/64x128x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:130 static_shared:12288 max_threads:384\niters=20000 warmup=500\navg_ns=3097.96\ngflops=169.237\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x128x32/64x128x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:130 static_shared:12288 max_threads:384",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3097.96,
+            "gflops": 169.237,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 130,
+              "static_shared": 12288,
+              "max_threads": 384
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x128x32/64x128x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:130 static_shared:12288 max_threads:384\niters=20000 warmup=500\navg_ns=3143.88\ngflops=166.764\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x128x32/64x128x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:130 static_shared:12288 max_threads:384",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3143.88,
+            "gflops": 166.764,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 130,
+              "static_shared": 12288,
+              "max_threads": 384
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x128x32/64x128x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:130 static_shared:12288 max_threads:384\niters=20000 warmup=500\navg_ns=3079.53\ngflops=170.25\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x128x32/64x128x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:130 static_shared:12288 max_threads:384",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3079.53,
+            "gflops": 170.25,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 130,
+              "static_shared": 12288,
+              "max_threads": 384
+            }
+          }
+        ]
+      },
+      "triton": {
+        "binary": "/tmp/triton_stage1_64x128x32.cubin",
+        "kernel": "matmul_kernel",
+        "kind": "triton9",
+        "shared_bytes": 16896,
+        "shared_source": "fallback",
+        "summary_ns": {
+          "min": 4027.29,
+          "median": 4105.37,
+          "max": 4108.44,
+          "mean": 4086.4440000000004,
+          "spread_pct": 1.976679324884228,
+          "stdev": 34.34516676331613
+        },
+        "summary_gflops": {
+          "min": 127.612,
+          "median": 127.708,
+          "max": 130.184,
+          "mean": 128.3068,
+          "spread_pct": 2.013969367619885,
+          "stdev": 1.0887567221376864
+        },
+        "attrs": {
+          "regs": 196,
+          "static_shared": 0,
+          "max_threads": 256
+        },
+        "samples": [
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_64x128x32.cubin\nkernel=matmul_kernel\nshape=64x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=16896\nattrs=regs:196 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4027.29\ngflops=130.184\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_64x128x32.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "64x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=16896",
+            "attrs": "regs:196 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4027.29,
+            "gflops": 130.184,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 196,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_64x128x32.cubin\nkernel=matmul_kernel\nshape=64x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=16896\nattrs=regs:196 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4105.83\ngflops=127.694\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_64x128x32.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "64x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=16896",
+            "attrs": "regs:196 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4105.83,
+            "gflops": 127.694,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 196,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_64x128x32.cubin\nkernel=matmul_kernel\nshape=64x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=16896\nattrs=regs:196 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4108.44\ngflops=127.612\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_64x128x32.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "64x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=16896",
+            "attrs": "regs:196 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4108.44,
+            "gflops": 127.612,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 196,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_64x128x32.cubin\nkernel=matmul_kernel\nshape=64x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=16896\nattrs=regs:196 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4105.37\ngflops=127.708\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_64x128x32.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "64x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=16896",
+            "attrs": "regs:196 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4105.37,
+            "gflops": 127.708,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 196,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_64x128x32.cubin\nkernel=matmul_kernel\nshape=64x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=16896\nattrs=regs:196 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4085.29\ngflops=128.336\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_64x128x32.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "64x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=16896",
+            "attrs": "regs:196 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4085.29,
+            "gflops": 128.336,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 196,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          }
+        ]
+      },
+      "comparison": {
+        "median_ns_delta": "mini 快 32.39%",
+        "mini_over_triton_median_pct": 132.39328063878435
+      },
+      "measurement": {
+        "unstable": false,
+        "unstable_spread_threshold": 10.0,
+        "extra_rounds_run": 0,
+        "total_rounds_run": 5
+      }
+    },
+    {
+      "shape": "128x64x32",
+      "config": {
+        "m": 128,
+        "n": 64,
+        "k": 32,
+        "block_m": 128,
+        "block_n": 64,
+        "block_k": 32,
+        "num_warps": 4,
+        "num_stages": 2,
+        "exact_tile": true,
+        "group_m": 1,
+        "block_x": 128,
+        "grid_x": 1,
+        "cubin_format": "isa"
+      },
+      "gpu_state_before_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1965,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 60
+      },
+      "gpu_state_after_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1957,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 60
+      },
+      "case_preheat": null,
+      "mini": {
+        "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x64x32/128x64x32.mini.bin",
+        "summary_ns": {
+          "min": 3118.59,
+          "median": 3134.21,
+          "max": 3168.7,
+          "mean": 3137.9939999999997,
+          "spread_pct": 1.598807993082776,
+          "stdev": 18.464415235798725
+        },
+        "summary_gflops": {
+          "min": 165.458,
+          "median": 167.279,
+          "max": 168.117,
+          "mean": 167.0818,
+          "spread_pct": 1.5895599567190093,
+          "stdev": 0.978385251319743
+        },
+        "attrs": {
+          "regs": 138,
+          "static_shared": 12288,
+          "max_threads": 384
+        },
+        "samples": [
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x64x32/128x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x64x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:138 static_shared:12288 max_threads:384\niters=20000 warmup=500\navg_ns=3168.7\ngflops=165.458\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x64x32/128x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x64x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:138 static_shared:12288 max_threads:384",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3168.7,
+            "gflops": 165.458,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 138,
+              "static_shared": 12288,
+              "max_threads": 384
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x64x32/128x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x64x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:138 static_shared:12288 max_threads:384\niters=20000 warmup=500\navg_ns=3133.29\ngflops=167.328\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x64x32/128x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x64x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:138 static_shared:12288 max_threads:384",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3133.29,
+            "gflops": 167.328,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 138,
+              "static_shared": 12288,
+              "max_threads": 384
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x64x32/128x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x64x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:138 static_shared:12288 max_threads:384\niters=20000 warmup=500\navg_ns=3135.18\ngflops=167.227\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x64x32/128x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x64x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:138 static_shared:12288 max_threads:384",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3135.18,
+            "gflops": 167.227,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 138,
+              "static_shared": 12288,
+              "max_threads": 384
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x64x32/128x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x64x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:138 static_shared:12288 max_threads:384\niters=20000 warmup=500\navg_ns=3118.59\ngflops=168.117\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x64x32/128x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x64x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:138 static_shared:12288 max_threads:384",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3118.59,
+            "gflops": 168.117,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 138,
+              "static_shared": 12288,
+              "max_threads": 384
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x64x32/128x64x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x64x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:138 static_shared:12288 max_threads:384\niters=20000 warmup=500\navg_ns=3134.21\ngflops=167.279\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x64x32/128x64x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x64x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:138 static_shared:12288 max_threads:384",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3134.21,
+            "gflops": 167.279,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 138,
+              "static_shared": 12288,
+              "max_threads": 384
+            }
+          }
+        ]
+      },
+      "triton": {
+        "binary": "/tmp/triton_stage1_128x64x32.cubin",
+        "kernel": "matmul_kernel",
+        "kind": "triton9",
+        "shared_bytes": 17408,
+        "shared_source": "fallback",
+        "summary_ns": {
+          "min": 4059.96,
+          "median": 4079.26,
+          "max": 4139.01,
+          "mean": 4091.782,
+          "spread_pct": 1.9378514730612948,
+          "stdev": 30.51696528162661
+        },
+        "summary_gflops": {
+          "min": 126.67,
+          "median": 128.525,
+          "max": 129.136,
+          "mean": 128.1374,
+          "spread_pct": 1.9186928613110241,
+          "stdev": 0.9512114906791203
+        },
+        "attrs": {
+          "regs": 198,
+          "static_shared": 0,
+          "max_threads": 256
+        },
+        "samples": [
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_128x64x32.cubin\nkernel=matmul_kernel\nshape=128x64x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=17408\nattrs=regs:198 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4103.01\ngflops=127.781\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_128x64x32.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "128x64x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=17408",
+            "attrs": "regs:198 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4103.01,
+            "gflops": 127.781,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 198,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_128x64x32.cubin\nkernel=matmul_kernel\nshape=128x64x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=17408\nattrs=regs:198 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4079.26\ngflops=128.525\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_128x64x32.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "128x64x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=17408",
+            "attrs": "regs:198 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4079.26,
+            "gflops": 128.525,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 198,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_128x64x32.cubin\nkernel=matmul_kernel\nshape=128x64x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=17408\nattrs=regs:198 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4139.01\ngflops=126.67\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_128x64x32.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "128x64x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=17408",
+            "attrs": "regs:198 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4139.01,
+            "gflops": 126.67,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 198,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_128x64x32.cubin\nkernel=matmul_kernel\nshape=128x64x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=17408\nattrs=regs:198 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4077.67\ngflops=128.575\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_128x64x32.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "128x64x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=17408",
+            "attrs": "regs:198 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4077.67,
+            "gflops": 128.575,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 198,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_128x64x32.cubin\nkernel=matmul_kernel\nshape=128x64x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=17408\nattrs=regs:198 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4059.96\ngflops=129.136\nc00=640000\ncmid=1.36772e+09\nclast=5.24288e+09\nchecksum=1.09242e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_128x64x32.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "128x64x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=17408",
+            "attrs": "regs:198 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4059.96,
+            "gflops": 129.136,
+            "c00": 640000.0,
+            "cmid": 1367720000.0,
+            "clast": 5242880000.0,
+            "checksum": 10924200000000.0,
+            "attrs_parsed": {
+              "regs": 198,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          }
+        ]
+      },
+      "comparison": {
+        "median_ns_delta": "mini 快 30.15%",
+        "mini_over_triton_median_pct": 130.15273386275967
+      },
+      "measurement": {
+        "unstable": false,
+        "unstable_spread_threshold": 10.0,
+        "extra_rounds_run": 0,
+        "total_rounds_run": 5
+      }
+    },
+    {
+      "shape": "64x64x64",
+      "config": {
+        "m": 64,
+        "n": 64,
+        "k": 64,
+        "block_m": 64,
+        "block_n": 64,
+        "block_k": 64,
+        "num_warps": 1,
+        "num_stages": 2,
+        "exact_tile": true,
+        "group_m": 1,
+        "block_x": 32,
+        "grid_x": 1,
+        "cubin_format": "isa"
+      },
+      "gpu_state_before_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1957,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 60
+      },
+      "gpu_state_after_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1957,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 61
+      },
+      "case_preheat": null,
+      "mini": {
+        "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x64/64x64x64.mini.bin",
+        "summary_ns": {
+          "min": 4452.45,
+          "median": 4503.03,
+          "max": 4525.04,
+          "mean": 4489.098,
+          "spread_pct": 1.6120256804862536,
+          "stdev": 31.984791229582857
+        },
+        "summary_gflops": {
+          "min": 115.864,
+          "median": 116.43,
+          "max": 117.753,
+          "mean": 116.79639999999999,
+          "spread_pct": 1.622434080563425,
+          "stdev": 0.8332714443685179
+        },
+        "attrs": {
+          "regs": 255,
+          "static_shared": 8192,
+          "max_threads": 256
+        },
+        "samples": [
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x64/64x64x64.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x64\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=4503.03\ngflops=116.43\nc00=1.28e+06\ncmid=1.39267e+09\nclast=5.24288e+09\nchecksum=5.47205e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x64/64x64x64.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x64",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4503.03,
+            "gflops": 116.43,
+            "c00": 1280000.0,
+            "cmid": 1392670000.0,
+            "clast": 5242880000.0,
+            "checksum": 5472050000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x64/64x64x64.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x64\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=4458.24\ngflops=117.6\nc00=1.28e+06\ncmid=1.39267e+09\nclast=5.24288e+09\nchecksum=5.47205e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x64/64x64x64.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x64",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4458.24,
+            "gflops": 117.6,
+            "c00": 1280000.0,
+            "cmid": 1392670000.0,
+            "clast": 5242880000.0,
+            "checksum": 5472050000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x64/64x64x64.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x64\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=4525.04\ngflops=115.864\nc00=1.28e+06\ncmid=1.39267e+09\nclast=5.24288e+09\nchecksum=5.47205e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x64/64x64x64.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x64",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4525.04,
+            "gflops": 115.864,
+            "c00": 1280000.0,
+            "cmid": 1392670000.0,
+            "clast": 5242880000.0,
+            "checksum": 5472050000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x64/64x64x64.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x64\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=4506.73\ngflops=116.335\nc00=1.28e+06\ncmid=1.39267e+09\nclast=5.24288e+09\nchecksum=5.47205e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x64/64x64x64.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x64",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4506.73,
+            "gflops": 116.335,
+            "c00": 1280000.0,
+            "cmid": 1392670000.0,
+            "clast": 5242880000.0,
+            "checksum": 5472050000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x64/64x64x64.mini.bin\nkernel=kernel_tb_kernel_0\nshape=64x64x64\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=4452.45\ngflops=117.753\nc00=1.28e+06\ncmid=1.39267e+09\nclast=5.24288e+09\nchecksum=5.47205e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/64x64x64/64x64x64.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "64x64x64",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4452.45,
+            "gflops": 117.753,
+            "c00": 1280000.0,
+            "cmid": 1392670000.0,
+            "clast": 5242880000.0,
+            "checksum": 5472050000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          }
+        ]
+      },
+      "triton": {
+        "binary": "/tmp/triton_stage1_64x64x64.cubin",
+        "kernel": "matmul_kernel",
+        "kind": "triton9",
+        "shared_bytes": 8192,
+        "shared_source": "/tmp/triton_stage1_cache_test/bCFZDj0ru7pAIQM6jSDOhMvV4oNpkyliS7CwAynZ8I8/matmul_kernel.json",
+        "summary_ns": {
+          "min": 5079.4,
+          "median": 5087.79,
+          "max": 5134.03,
+          "mean": 5101.25,
+          "spread_pct": 1.0737471475827443,
+          "stdev": 25.952983450848087
+        },
+        "summary_gflops": {
+          "min": 102.12,
+          "median": 103.048,
+          "max": 103.219,
+          "mean": 102.77860000000001,
+          "spread_pct": 1.066493284682856,
+          "stdev": 0.5221482548089178
+        },
+        "attrs": {
+          "regs": 255,
+          "static_shared": 0,
+          "max_threads": 256
+        },
+        "samples": [
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_64x64x64.cubin\nkernel=matmul_kernel\nshape=64x64x64\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=8192\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=5080.63\ngflops=103.194\nc00=1.28e+06\ncmid=1.39267e+09\nclast=5.24288e+09\nchecksum=5.47205e+12\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_64x64x64.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "64x64x64",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=8192",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 5080.63,
+            "gflops": 103.194,
+            "c00": 1280000.0,
+            "cmid": 1392670000.0,
+            "clast": 5242880000.0,
+            "checksum": 5472050000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_64x64x64.cubin\nkernel=matmul_kernel\nshape=64x64x64\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=8192\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=5124.4\ngflops=102.312\nc00=1.28e+06\ncmid=1.39267e+09\nclast=5.24288e+09\nchecksum=5.47205e+12\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_64x64x64.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "64x64x64",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=8192",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 5124.4,
+            "gflops": 102.312,
+            "c00": 1280000.0,
+            "cmid": 1392670000.0,
+            "clast": 5242880000.0,
+            "checksum": 5472050000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_64x64x64.cubin\nkernel=matmul_kernel\nshape=64x64x64\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=8192\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=5134.03\ngflops=102.12\nc00=1.28e+06\ncmid=1.39267e+09\nclast=5.24288e+09\nchecksum=5.47205e+12\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_64x64x64.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "64x64x64",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=8192",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 5134.03,
+            "gflops": 102.12,
+            "c00": 1280000.0,
+            "cmid": 1392670000.0,
+            "clast": 5242880000.0,
+            "checksum": 5472050000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_64x64x64.cubin\nkernel=matmul_kernel\nshape=64x64x64\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=8192\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=5079.4\ngflops=103.219\nc00=1.28e+06\ncmid=1.39267e+09\nclast=5.24288e+09\nchecksum=5.47205e+12\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_64x64x64.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "64x64x64",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=8192",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 5079.4,
+            "gflops": 103.219,
+            "c00": 1280000.0,
+            "cmid": 1392670000.0,
+            "clast": 5242880000.0,
+            "checksum": 5472050000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_64x64x64.cubin\nkernel=matmul_kernel\nshape=64x64x64\nlaunch=grid(1,1,1) block(32,1,1) dyn_shared=8192\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=5087.79\ngflops=103.048\nc00=1.28e+06\ncmid=1.39267e+09\nclast=5.24288e+09\nchecksum=5.47205e+12\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_64x64x64.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "64x64x64",
+            "launch": "grid(1,1,1) block(32,1,1) dyn_shared=8192",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 5087.79,
+            "gflops": 103.048,
+            "c00": 1280000.0,
+            "cmid": 1392670000.0,
+            "clast": 5242880000.0,
+            "checksum": 5472050000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          }
+        ]
+      },
+      "comparison": {
+        "median_ns_delta": "mini 快 12.99%",
+        "mini_over_triton_median_pct": 112.98592281197328
+      },
+      "measurement": {
+        "unstable": false,
+        "unstable_spread_threshold": 10.0,
+        "extra_rounds_run": 0,
+        "total_rounds_run": 5
+      }
+    },
+    {
+      "shape": "128x128x32",
+      "config": {
+        "m": 128,
+        "n": 128,
+        "k": 32,
+        "block_m": 128,
+        "block_n": 128,
+        "block_k": 32,
+        "num_warps": 4,
+        "num_stages": 2,
+        "exact_tile": true,
+        "group_m": 1,
+        "block_x": 128,
+        "grid_x": 1,
+        "cubin_format": "isa"
+      },
+      "gpu_state_before_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1965,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 58
+      },
+      "gpu_state_after_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1965,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 59
+      },
+      "case_preheat": {
+        "enabled": true,
+        "heater_case": "128x128x64",
+        "attempts": [
+          {
+            "attempt": 1,
+            "before": {
+              "pstate": "P0",
+              "sm_clock_mhz": 1522,
+              "sm_clock_max_mhz": 2100,
+              "mem_clock_mhz": 7001,
+              "temperature_c": 56
+            },
+            "after": {
+              "pstate": "P0",
+              "sm_clock_mhz": 1965,
+              "sm_clock_max_mhz": 2100,
+              "mem_clock_mhz": 7001,
+              "temperature_c": 58
+            },
+            "mini_avg_ns": 7957.4,
+            "triton_avg_ns": 7724.59
+          }
+        ],
+        "target_floor_pct": 90.0,
+        "target_floor_mhz": 1890,
+        "reached_hot_clock": true
+      },
+      "mini": {
+        "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x32/128x128x32.mini.bin",
+        "summary_ns": {
+          "min": 4449.23,
+          "median": 4469.56,
+          "max": 4511.59,
+          "mean": 4479.992,
+          "spread_pct": 1.3952156364384989,
+          "stdev": 25.536285360247756
+        },
+        "summary_gflops": {
+          "min": 232.418,
+          "median": 234.604,
+          "max": 235.676,
+          "mean": 234.0638,
+          "spread_pct": 1.3887231249253982,
+          "stdev": 1.3333012412804468
+        },
+        "attrs": {
+          "regs": 246,
+          "static_shared": 16384,
+          "max_threads": 256
+        },
+        "samples": [
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x32/128x128x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:246 static_shared:16384 max_threads:256\niters=20000 warmup=500\navg_ns=4468.84\ngflops=234.642\nc00=640000\ncmid=2.70337e+09\nclast=1.04858e+10\nchecksum=4.33475e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x32/128x128x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:246 static_shared:16384 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4468.84,
+            "gflops": 234.642,
+            "c00": 640000.0,
+            "cmid": 2703370000.0,
+            "clast": 10485800000.0,
+            "checksum": 43347500000000.0,
+            "attrs_parsed": {
+              "regs": 246,
+              "static_shared": 16384,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x32/128x128x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:246 static_shared:16384 max_threads:256\niters=20000 warmup=500\navg_ns=4449.23\ngflops=235.676\nc00=640000\ncmid=2.70337e+09\nclast=1.04858e+10\nchecksum=4.33475e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x32/128x128x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:246 static_shared:16384 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4449.23,
+            "gflops": 235.676,
+            "c00": 640000.0,
+            "cmid": 2703370000.0,
+            "clast": 10485800000.0,
+            "checksum": 43347500000000.0,
+            "attrs_parsed": {
+              "regs": 246,
+              "static_shared": 16384,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x32/128x128x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:246 static_shared:16384 max_threads:256\niters=20000 warmup=500\navg_ns=4511.59\ngflops=232.418\nc00=640000\ncmid=2.70337e+09\nclast=1.04858e+10\nchecksum=4.33475e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x32/128x128x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:246 static_shared:16384 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4511.59,
+            "gflops": 232.418,
+            "c00": 640000.0,
+            "cmid": 2703370000.0,
+            "clast": 10485800000.0,
+            "checksum": 43347500000000.0,
+            "attrs_parsed": {
+              "regs": 246,
+              "static_shared": 16384,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x32/128x128x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:246 static_shared:16384 max_threads:256\niters=20000 warmup=500\navg_ns=4469.56\ngflops=234.604\nc00=640000\ncmid=2.70337e+09\nclast=1.04858e+10\nchecksum=4.33475e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x32/128x128x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:246 static_shared:16384 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4469.56,
+            "gflops": 234.604,
+            "c00": 640000.0,
+            "cmid": 2703370000.0,
+            "clast": 10485800000.0,
+            "checksum": 43347500000000.0,
+            "attrs_parsed": {
+              "regs": 246,
+              "static_shared": 16384,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x32/128x128x32.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:246 static_shared:16384 max_threads:256\niters=20000 warmup=500\navg_ns=4500.74\ngflops=232.979\nc00=640000\ncmid=2.70337e+09\nclast=1.04858e+10\nchecksum=4.33475e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x32/128x128x32.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:246 static_shared:16384 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4500.74,
+            "gflops": 232.979,
+            "c00": 640000.0,
+            "cmid": 2703370000.0,
+            "clast": 10485800000.0,
+            "checksum": 43347500000000.0,
+            "attrs_parsed": {
+              "regs": 246,
+              "static_shared": 16384,
+              "max_threads": 256
+            }
+          }
+        ]
+      },
+      "triton": {
+        "binary": "/tmp/triton_exact_tile_128x128x32_real.cubin",
+        "kernel": "exact_tile_matmul_kernel",
+        "kind": "triton",
+        "shared_bytes": 33280,
+        "shared_source": "fallback",
+        "summary_ns": {
+          "min": 5937.2,
+          "median": 6000.59,
+          "max": 6002.94,
+          "mean": 5979.514,
+          "spread_pct": 1.0955589367045537,
+          "stdev": 30.881257746406757
+        },
+        "summary_gflops": {
+          "min": 174.677,
+          "median": 174.746,
+          "max": 176.611,
+          "mean": 175.36520000000002,
+          "spread_pct": 1.1067492245888302,
+          "stdev": 0.9076608397413638
+        },
+        "attrs": {
+          "regs": 237,
+          "static_shared": 0,
+          "max_threads": 256
+        },
+        "samples": [
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_128x128x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=128x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=33280\nattrs=regs:237 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=5937.2\ngflops=176.611\nc00=640000\ncmid=2.70337e+09\nclast=1.04858e+10\nchecksum=4.33475e+13\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_128x128x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "128x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=33280",
+            "attrs": "regs:237 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 5937.2,
+            "gflops": 176.611,
+            "c00": 640000.0,
+            "cmid": 2703370000.0,
+            "clast": 10485800000.0,
+            "checksum": 43347500000000.0,
+            "attrs_parsed": {
+              "regs": 237,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_128x128x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=128x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=33280\nattrs=regs:237 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=6001.1\ngflops=174.731\nc00=640000\ncmid=2.70337e+09\nclast=1.04858e+10\nchecksum=4.33475e+13\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_128x128x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "128x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=33280",
+            "attrs": "regs:237 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 6001.1,
+            "gflops": 174.731,
+            "c00": 640000.0,
+            "cmid": 2703370000.0,
+            "clast": 10485800000.0,
+            "checksum": 43347500000000.0,
+            "attrs_parsed": {
+              "regs": 237,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_128x128x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=128x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=33280\nattrs=regs:237 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=6000.59\ngflops=174.746\nc00=640000\ncmid=2.70337e+09\nclast=1.04858e+10\nchecksum=4.33475e+13\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_128x128x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "128x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=33280",
+            "attrs": "regs:237 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 6000.59,
+            "gflops": 174.746,
+            "c00": 640000.0,
+            "cmid": 2703370000.0,
+            "clast": 10485800000.0,
+            "checksum": 43347500000000.0,
+            "attrs_parsed": {
+              "regs": 237,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_128x128x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=128x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=33280\nattrs=regs:237 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=5955.74\ngflops=176.061\nc00=640000\ncmid=2.70337e+09\nclast=1.04858e+10\nchecksum=4.33475e+13\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_128x128x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "128x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=33280",
+            "attrs": "regs:237 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 5955.74,
+            "gflops": 176.061,
+            "c00": 640000.0,
+            "cmid": 2703370000.0,
+            "clast": 10485800000.0,
+            "checksum": 43347500000000.0,
+            "attrs_parsed": {
+              "regs": 237,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton\nbinary=/tmp/triton_exact_tile_128x128x32_real.cubin\nkernel=exact_tile_matmul_kernel\nshape=128x128x32\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=33280\nattrs=regs:237 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=6002.94\ngflops=174.677\nc00=640000\ncmid=2.70337e+09\nclast=1.04858e+10\nchecksum=4.33475e+13\n",
+            "kind": "triton",
+            "binary": "/tmp/triton_exact_tile_128x128x32_real.cubin",
+            "kernel": "exact_tile_matmul_kernel",
+            "shape": "128x128x32",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=33280",
+            "attrs": "regs:237 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 6002.94,
+            "gflops": 174.677,
+            "c00": 640000.0,
+            "cmid": 2703370000.0,
+            "clast": 10485800000.0,
+            "checksum": 43347500000000.0,
+            "attrs_parsed": {
+              "regs": 237,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          }
+        ]
+      },
+      "comparison": {
+        "median_ns_delta": "mini 快 34.25%",
+        "mini_over_triton_median_pct": 134.25460224272635
+      },
+      "measurement": {
+        "unstable": false,
+        "unstable_spread_threshold": 10.0,
+        "extra_rounds_run": 0,
+        "total_rounds_run": 5
+      }
+    },
+    {
+      "shape": "128x128x64",
+      "config": {
+        "m": 128,
+        "n": 128,
+        "k": 64,
+        "block_m": 128,
+        "block_n": 128,
+        "block_k": 64,
+        "num_warps": 4,
+        "num_stages": 2,
+        "exact_tile": true,
+        "group_m": 1,
+        "block_x": 128,
+        "grid_x": 1,
+        "cubin_format": "isa"
+      },
+      "gpu_state_before_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1965,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 56
+      },
+      "gpu_state_after_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1965,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 58
+      },
+      "case_preheat": null,
+      "mini": {
+        "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x64/128x128x64.mini.bin",
+        "summary_ns": {
+          "min": 6108.72,
+          "median": 6149.27,
+          "max": 6172.77,
+          "mean": 6144.448,
+          "spread_pct": 1.0415870501701856,
+          "stdev": 23.097316294323075
+        },
+        "summary_gflops": {
+          "min": 339.742,
+          "median": 341.041,
+          "max": 343.304,
+          "mean": 341.312,
+          "spread_pct": 1.0444492011224324,
+          "stdev": 1.2851484350066176
+        },
+        "attrs": {
+          "regs": 254,
+          "static_shared": 16384,
+          "max_threads": 256
+        },
+        "samples": [
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x64/128x128x64.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x128x64\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:254 static_shared:16384 max_threads:256\niters=20000 warmup=500\navg_ns=6149.27\ngflops=341.041\nc00=1.28e+06\ncmid=5.37304e+09\nclast=2.09715e+10\nchecksum=8.60995e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x64/128x128x64.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x128x64",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:254 static_shared:16384 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 6149.27,
+            "gflops": 341.041,
+            "c00": 1280000.0,
+            "cmid": 5373040000.0,
+            "clast": 20971500000.0,
+            "checksum": 86099500000000.0,
+            "attrs_parsed": {
+              "regs": 254,
+              "static_shared": 16384,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x64/128x128x64.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x128x64\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:254 static_shared:16384 max_threads:256\niters=20000 warmup=500\navg_ns=6149.53\ngflops=341.026\nc00=1.28e+06\ncmid=5.37304e+09\nclast=2.09715e+10\nchecksum=8.60995e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x64/128x128x64.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x128x64",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:254 static_shared:16384 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 6149.53,
+            "gflops": 341.026,
+            "c00": 1280000.0,
+            "cmid": 5373040000.0,
+            "clast": 20971500000.0,
+            "checksum": 86099500000000.0,
+            "attrs_parsed": {
+              "regs": 254,
+              "static_shared": 16384,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x64/128x128x64.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x128x64\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:254 static_shared:16384 max_threads:256\niters=20000 warmup=500\navg_ns=6172.77\ngflops=339.742\nc00=1.28e+06\ncmid=5.37304e+09\nclast=2.09715e+10\nchecksum=8.60995e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x64/128x128x64.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x128x64",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:254 static_shared:16384 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 6172.77,
+            "gflops": 339.742,
+            "c00": 1280000.0,
+            "cmid": 5373040000.0,
+            "clast": 20971500000.0,
+            "checksum": 86099500000000.0,
+            "attrs_parsed": {
+              "regs": 254,
+              "static_shared": 16384,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x64/128x128x64.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x128x64\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:254 static_shared:16384 max_threads:256\niters=20000 warmup=500\navg_ns=6108.72\ngflops=343.304\nc00=1.28e+06\ncmid=5.37304e+09\nclast=2.09715e+10\nchecksum=8.60995e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x64/128x128x64.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x128x64",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:254 static_shared:16384 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 6108.72,
+            "gflops": 343.304,
+            "c00": 1280000.0,
+            "cmid": 5373040000.0,
+            "clast": 20971500000.0,
+            "checksum": 86099500000000.0,
+            "attrs_parsed": {
+              "regs": 254,
+              "static_shared": 16384,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x64/128x128x64.mini.bin\nkernel=kernel_tb_kernel_0\nshape=128x128x64\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:254 static_shared:16384 max_threads:256\niters=20000 warmup=500\navg_ns=6141.95\ngflops=341.447\nc00=1.28e+06\ncmid=5.37304e+09\nclast=2.09715e+10\nchecksum=8.60995e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/128x128x64/128x128x64.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "128x128x64",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:254 static_shared:16384 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 6141.95,
+            "gflops": 341.447,
+            "c00": 1280000.0,
+            "cmid": 5373040000.0,
+            "clast": 20971500000.0,
+            "checksum": 86099500000000.0,
+            "attrs_parsed": {
+              "regs": 254,
+              "static_shared": 16384,
+              "max_threads": 256
+            }
+          }
+        ]
+      },
+      "triton": {
+        "binary": "/tmp/triton_stage1_128x128x64.cubin",
+        "kernel": "matmul_kernel",
+        "kind": "triton9",
+        "shared_bytes": 16896,
+        "shared_source": "fallback",
+        "summary_ns": {
+          "min": 7729.05,
+          "median": 7744.25,
+          "max": 7769.79,
+          "mean": 7744.63,
+          "spread_pct": 0.5260677276689129,
+          "stdev": 16.752989285497634
+        },
+        "summary_gflops": {
+          "min": 269.911,
+          "median": 270.801,
+          "max": 271.334,
+          "mean": 270.7888,
+          "spread_pct": 0.5254781186184696,
+          "stdev": 0.5852103895181603
+        },
+        "attrs": {
+          "regs": 255,
+          "static_shared": 0,
+          "max_threads": 256
+        },
+        "samples": [
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_128x128x64.cubin\nkernel=matmul_kernel\nshape=128x128x64\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=16896\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=7769.79\ngflops=269.911\nc00=1.28e+06\ncmid=5.37304e+09\nclast=2.09715e+10\nchecksum=8.60995e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_128x128x64.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "128x128x64",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=16896",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 7769.79,
+            "gflops": 269.911,
+            "c00": 1280000.0,
+            "cmid": 5373040000.0,
+            "clast": 20971500000.0,
+            "checksum": 86099500000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_128x128x64.cubin\nkernel=matmul_kernel\nshape=128x128x64\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=16896\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=7729.92\ngflops=271.303\nc00=1.28e+06\ncmid=5.37304e+09\nclast=2.09715e+10\nchecksum=8.60995e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_128x128x64.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "128x128x64",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=16896",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 7729.92,
+            "gflops": 271.303,
+            "c00": 1280000.0,
+            "cmid": 5373040000.0,
+            "clast": 20971500000.0,
+            "checksum": 86099500000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_128x128x64.cubin\nkernel=matmul_kernel\nshape=128x128x64\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=16896\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=7729.05\ngflops=271.334\nc00=1.28e+06\ncmid=5.37304e+09\nclast=2.09715e+10\nchecksum=8.60995e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_128x128x64.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "128x128x64",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=16896",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 7729.05,
+            "gflops": 271.334,
+            "c00": 1280000.0,
+            "cmid": 5373040000.0,
+            "clast": 20971500000.0,
+            "checksum": 86099500000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_128x128x64.cubin\nkernel=matmul_kernel\nshape=128x128x64\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=16896\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=7750.14\ngflops=270.595\nc00=1.28e+06\ncmid=5.37304e+09\nclast=2.09715e+10\nchecksum=8.60995e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_128x128x64.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "128x128x64",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=16896",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 7750.14,
+            "gflops": 270.595,
+            "c00": 1280000.0,
+            "cmid": 5373040000.0,
+            "clast": 20971500000.0,
+            "checksum": 86099500000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/triton_stage1_128x128x64.cubin\nkernel=matmul_kernel\nshape=128x128x64\nlaunch=grid(1,1,1) block(128,1,1) dyn_shared=16896\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=7744.25\ngflops=270.801\nc00=1.28e+06\ncmid=5.37304e+09\nclast=2.09715e+10\nchecksum=8.60995e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/triton_stage1_128x128x64.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "128x128x64",
+            "launch": "grid(1,1,1) block(128,1,1) dyn_shared=16896",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 7744.25,
+            "gflops": 270.801,
+            "c00": 1280000.0,
+            "cmid": 5373040000.0,
+            "clast": 20971500000.0,
+            "checksum": 86099500000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          }
+        ]
+      },
+      "comparison": {
+        "median_ns_delta": "mini 快 25.94%",
+        "mini_over_triton_median_pct": 125.93771293177889
+      },
+      "measurement": {
+        "unstable": false,
+        "unstable_spread_threshold": 10.0,
+        "extra_rounds_run": 0,
+        "total_rounds_run": 5
+      }
+    },
+    {
+      "shape": "96x80x32_general",
+      "config": {
+        "m": 96,
+        "n": 80,
+        "k": 32,
+        "block_m": 64,
+        "block_n": 64,
+        "block_k": 32,
+        "num_warps": 1,
+        "num_stages": 2,
+        "exact_tile": false,
+        "group_m": 1,
+        "block_x": 32,
+        "grid_x": 4,
+        "cubin_format": "isa"
+      },
+      "gpu_state_before_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1957,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 61
+      },
+      "gpu_state_after_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1957,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 61
+      },
+      "case_preheat": null,
+      "mini": {
+        "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.mini.bin",
+        "summary_ns": {
+          "min": 4123.55,
+          "median": 4143.04,
+          "max": 4143.67,
+          "mean": 4138.996,
+          "spread_pct": 0.48563373754537464,
+          "stdev": 8.686658160650678
+        },
+        "summary_gflops": {
+          "min": 118.62,
+          "median": 118.637,
+          "max": 119.198,
+          "mean": 118.7536,
+          "spread_pct": 0.4872004517983333,
+          "stdev": 0.24988857516901028
+        },
+        "attrs": {
+          "regs": 255,
+          "static_shared": 8192,
+          "max_threads": 256
+        },
+        "samples": [
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=96x80x32\nlaunch=grid(4,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=4143.46\ngflops=118.625\nc00=640000\ncmid=1.27513e+09\nclast=4.9152e+09\nchecksum=9.59584e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "96x80x32",
+            "launch": "grid(4,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4143.46,
+            "gflops": 118.625,
+            "c00": 640000.0,
+            "cmid": 1275130000.0,
+            "clast": 4915200000.0,
+            "checksum": 9595840000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=96x80x32\nlaunch=grid(4,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=4141.26\ngflops=118.688\nc00=640000\ncmid=1.27513e+09\nclast=4.9152e+09\nchecksum=9.59584e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "96x80x32",
+            "launch": "grid(4,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4141.26,
+            "gflops": 118.688,
+            "c00": 640000.0,
+            "cmid": 1275130000.0,
+            "clast": 4915200000.0,
+            "checksum": 9595840000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=96x80x32\nlaunch=grid(4,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=4143.67\ngflops=118.62\nc00=640000\ncmid=1.27513e+09\nclast=4.9152e+09\nchecksum=9.59584e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "96x80x32",
+            "launch": "grid(4,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4143.67,
+            "gflops": 118.62,
+            "c00": 640000.0,
+            "cmid": 1275130000.0,
+            "clast": 4915200000.0,
+            "checksum": 9595840000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=96x80x32\nlaunch=grid(4,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=4143.04\ngflops=118.637\nc00=640000\ncmid=1.27513e+09\nclast=4.9152e+09\nchecksum=9.59584e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "96x80x32",
+            "launch": "grid(4,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4143.04,
+            "gflops": 118.637,
+            "c00": 640000.0,
+            "cmid": 1275130000.0,
+            "clast": 4915200000.0,
+            "checksum": 9595840000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=96x80x32\nlaunch=grid(4,1,1) block(32,1,1) dyn_shared=0\nattrs=regs:255 static_shared:8192 max_threads:256\niters=20000 warmup=500\navg_ns=4123.55\ngflops=119.198\nc00=640000\ncmid=1.27513e+09\nclast=4.9152e+09\nchecksum=9.59584e+12\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "96x80x32",
+            "launch": "grid(4,1,1) block(32,1,1) dyn_shared=0",
+            "attrs": "regs:255 static_shared:8192 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4123.55,
+            "gflops": 119.198,
+            "c00": 640000.0,
+            "cmid": 1275130000.0,
+            "clast": 4915200000.0,
+            "checksum": 9595840000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 8192,
+              "max_threads": 256
+            }
+          }
+        ]
+      },
+      "triton": {
+        "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.cubin",
+        "kernel": "matmul_kernel",
+        "kind": "triton9",
+        "shared_bytes": 8192,
+        "shared_source": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.json",
+        "summary_ns": {
+          "min": 4959.13,
+          "median": 5005.82,
+          "max": 5018.73,
+          "mean": 4991.568,
+          "spread_pct": 1.190614125158305,
+          "stdev": 29.912714186445797
+        },
+        "summary_gflops": {
+          "min": 97.9372,
+          "median": 98.1896,
+          "max": 99.1142,
+          "mean": 98.47290000000001,
+          "spread_pct": 1.1987012881201191,
+          "stdev": 0.5912018098754416
+        },
+        "attrs": {
+          "regs": 255,
+          "static_shared": 0,
+          "max_threads": 256
+        },
+        "samples": [
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.cubin\nkernel=matmul_kernel\nshape=96x80x32\nlaunch=grid(4,1,1) block(32,1,1) dyn_shared=8192\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=5014.88\ngflops=98.0123\nc00=640000\ncmid=1.27513e+09\nclast=4.9152e+09\nchecksum=9.59584e+12\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "96x80x32",
+            "launch": "grid(4,1,1) block(32,1,1) dyn_shared=8192",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 5014.88,
+            "gflops": 98.0123,
+            "c00": 640000.0,
+            "cmid": 1275130000.0,
+            "clast": 4915200000.0,
+            "checksum": 9595840000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.cubin\nkernel=matmul_kernel\nshape=96x80x32\nlaunch=grid(4,1,1) block(32,1,1) dyn_shared=8192\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4959.13\ngflops=99.1142\nc00=640000\ncmid=1.27513e+09\nclast=4.9152e+09\nchecksum=9.59584e+12\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "96x80x32",
+            "launch": "grid(4,1,1) block(32,1,1) dyn_shared=8192",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4959.13,
+            "gflops": 99.1142,
+            "c00": 640000.0,
+            "cmid": 1275130000.0,
+            "clast": 4915200000.0,
+            "checksum": 9595840000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.cubin\nkernel=matmul_kernel\nshape=96x80x32\nlaunch=grid(4,1,1) block(32,1,1) dyn_shared=8192\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=5018.73\ngflops=97.9372\nc00=640000\ncmid=1.27513e+09\nclast=4.9152e+09\nchecksum=9.59584e+12\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "96x80x32",
+            "launch": "grid(4,1,1) block(32,1,1) dyn_shared=8192",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 5018.73,
+            "gflops": 97.9372,
+            "c00": 640000.0,
+            "cmid": 1275130000.0,
+            "clast": 4915200000.0,
+            "checksum": 9595840000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.cubin\nkernel=matmul_kernel\nshape=96x80x32\nlaunch=grid(4,1,1) block(32,1,1) dyn_shared=8192\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=5005.82\ngflops=98.1896\nc00=640000\ncmid=1.27513e+09\nclast=4.9152e+09\nchecksum=9.59584e+12\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "96x80x32",
+            "launch": "grid(4,1,1) block(32,1,1) dyn_shared=8192",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 5005.82,
+            "gflops": 98.1896,
+            "c00": 640000.0,
+            "cmid": 1275130000.0,
+            "clast": 4915200000.0,
+            "checksum": 9595840000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.cubin\nkernel=matmul_kernel\nshape=96x80x32\nlaunch=grid(4,1,1) block(32,1,1) dyn_shared=8192\nattrs=regs:255 static_shared:0 max_threads:256\niters=20000 warmup=500\navg_ns=4959.28\ngflops=99.1112\nc00=640000\ncmid=1.27513e+09\nclast=4.9152e+09\nchecksum=9.59584e+12\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/96x80x32_general/96x80x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "96x80x32",
+            "launch": "grid(4,1,1) block(32,1,1) dyn_shared=8192",
+            "attrs": "regs:255 static_shared:0 max_threads:256",
+            "iters": "20000 warmup=500",
+            "avg_ns": 4959.28,
+            "gflops": 99.1112,
+            "c00": 640000.0,
+            "cmid": 1275130000.0,
+            "clast": 4915200000.0,
+            "checksum": 9595840000000.0,
+            "attrs_parsed": {
+              "regs": 255,
+              "static_shared": 0,
+              "max_threads": 256
+            }
+          }
+        ]
+      },
+      "comparison": {
+        "median_ns_delta": "mini 快 20.82%",
+        "mini_over_triton_median_pct": 120.82480497412527
+      },
+      "measurement": {
+        "unstable": false,
+        "unstable_spread_threshold": 10.0,
+        "extra_rounds_run": 0,
+        "total_rounds_run": 5
+      }
+    },
+    {
+      "shape": "192x128x32_grouped",
+      "config": {
+        "m": 192,
+        "n": 128,
+        "k": 32,
+        "block_m": 64,
+        "block_n": 64,
+        "block_k": 32,
+        "num_warps": 4,
+        "num_stages": 2,
+        "exact_tile": true,
+        "group_m": 2,
+        "block_x": 128,
+        "grid_x": 6,
+        "cubin_format": "isa"
+      },
+      "gpu_state_before_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1965,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 58
+      },
+      "gpu_state_after_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1470,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 56
+      },
+      "case_preheat": null,
+      "mini": {
+        "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin",
+        "summary_ns": {
+          "min": 2468.36,
+          "median": 3098.935,
+          "max": 3173.27,
+          "mean": 2930.0950000000003,
+          "spread_pct": 22.74684690062876,
+          "stdev": 313.87402728731087
+        },
+        "summary_gflops": {
+          "min": 495.66,
+          "median": 507.5915,
+          "max": 637.21,
+          "mean": 542.9289,
+          "spread_pct": 27.88659778581793,
+          "stdev": 63.62837593130566
+        },
+        "attrs": {
+          "regs": 84,
+          "static_shared": 8192,
+          "max_threads": 640
+        },
+        "samples": [
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin\nkernel=kernel_tb_kernel_0\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:84 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=2483.73\ngflops=633.267\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:84 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 2483.73,
+            "gflops": 633.267,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 84,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin\nkernel=kernel_tb_kernel_0\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:84 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=2468.36\ngflops=637.21\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:84 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 2468.36,
+            "gflops": 637.21,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 84,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin\nkernel=kernel_tb_kernel_0\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:84 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=2481.04\ngflops=633.953\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:84 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 2481.04,
+            "gflops": 633.953,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 84,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin\nkernel=kernel_tb_kernel_0\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:84 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3173.27\ngflops=495.66\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:84 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3173.27,
+            "gflops": 495.66,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 84,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin\nkernel=kernel_tb_kernel_0\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:84 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3141.09\ngflops=500.738\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:84 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3141.09,
+            "gflops": 500.738,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 84,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin\nkernel=kernel_tb_kernel_0\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:84 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3155.82\ngflops=498.4\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:84 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3155.82,
+            "gflops": 498.4,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 84,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin\nkernel=kernel_tb_kernel_0\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:84 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3070.92\ngflops=512.18\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:84 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3070.92,
+            "gflops": 512.18,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 84,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin\nkernel=kernel_tb_kernel_0\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:84 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3126.95\ngflops=503.003\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:84 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3126.95,
+            "gflops": 503.003,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 84,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin\nkernel=kernel_tb_kernel_0\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:84 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3070.6\ngflops=512.233\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:84 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3070.6,
+            "gflops": 512.233,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 84,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin\nkernel=kernel_tb_kernel_0\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:84 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3129.17\ngflops=502.645\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:84 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3129.17,
+            "gflops": 502.645,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 84,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          }
+        ]
+      },
+      "triton": {
+        "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin",
+        "kernel": "matmul_kernel",
+        "kind": "triton9",
+        "shared_bytes": 8704,
+        "shared_source": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.json",
+        "summary_ns": {
+          "min": 2890.7,
+          "median": 3724.3450000000003,
+          "max": 3914.31,
+          "mean": 3591.9479999999994,
+          "spread_pct": 27.484295896325396,
+          "stdev": 364.0311931628326
+        },
+        "summary_gflops": {
+          "min": 401.824,
+          "median": 422.348,
+          "max": 544.112,
+          "mean": 442.58060000000006,
+          "spread_pct": 33.689753473438955,
+          "stdev": 51.538522593838046
+        },
+        "attrs": {
+          "regs": 120,
+          "static_shared": 0,
+          "max_threads": 512
+        },
+        "samples": [
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin\nkernel=matmul_kernel\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:120 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=2950.25\ngflops=533.129\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:120 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 2950.25,
+            "gflops": 533.129,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 120,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin\nkernel=matmul_kernel\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:120 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=2890.7\ngflops=544.112\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:120 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 2890.7,
+            "gflops": 544.112,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 120,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin\nkernel=matmul_kernel\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:120 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3806.47\ngflops=413.208\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:120 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3806.47,
+            "gflops": 413.208,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 120,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin\nkernel=matmul_kernel\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:120 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3754.86\ngflops=418.887\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:120 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3754.86,
+            "gflops": 418.887,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 120,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin\nkernel=matmul_kernel\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:120 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3693.83\ngflops=425.809\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:120 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3693.83,
+            "gflops": 425.809,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 120,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin\nkernel=matmul_kernel\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:120 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3758.08\ngflops=418.528\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:120 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3758.08,
+            "gflops": 418.528,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 120,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin\nkernel=matmul_kernel\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:120 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3914.31\ngflops=401.824\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:120 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3914.31,
+            "gflops": 401.824,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 120,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin\nkernel=matmul_kernel\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:120 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3613.91\ngflops=435.225\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:120 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3613.91,
+            "gflops": 435.225,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 120,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin\nkernel=matmul_kernel\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:120 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3691.6\ngflops=426.066\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:120 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3691.6,
+            "gflops": 426.066,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 120,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin\nkernel=matmul_kernel\nshape=192x128x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:120 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3845.47\ngflops=409.018\nc00=640000\ncmid=4.01954e+09\nclast=1.57286e+10\nchecksum=9.72579e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/192x128x32_grouped/192x128x32_grouped.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "192x128x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:120 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3845.47,
+            "gflops": 409.018,
+            "c00": 640000.0,
+            "cmid": 4019540000.0,
+            "clast": 15728600000.0,
+            "checksum": 97257900000000.0,
+            "attrs_parsed": {
+              "regs": 120,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          }
+        ]
+      },
+      "comparison": {
+        "median_ns_delta": "mini 快 20.18%",
+        "mini_over_triton_median_pct": 120.18144943343441
+      },
+      "measurement": {
+        "unstable": true,
+        "unstable_spread_threshold": 10.0,
+        "extra_rounds_run": 5,
+        "total_rounds_run": 10
+      }
+    },
+    {
+      "shape": "160x96x32_general",
+      "config": {
+        "m": 160,
+        "n": 96,
+        "k": 32,
+        "block_m": 64,
+        "block_n": 64,
+        "block_k": 32,
+        "num_warps": 4,
+        "num_stages": 2,
+        "exact_tile": false,
+        "group_m": 1,
+        "block_x": 128,
+        "grid_x": 6,
+        "cubin_format": "isa"
+      },
+      "gpu_state_before_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1965,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 59
+      },
+      "gpu_state_after_case": {
+        "pstate": "P0",
+        "sm_clock_mhz": 1575,
+        "sm_clock_max_mhz": 2100,
+        "mem_clock_mhz": 7001,
+        "temperature_c": 58
+      },
+      "case_preheat": null,
+      "mini": {
+        "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin",
+        "summary_ns": {
+          "min": 2917.99,
+          "median": 3631.59,
+          "max": 3967.95,
+          "mean": 3518.179,
+          "spread_pct": 28.911854036386263,
+          "stdev": 335.36086402726113
+        },
+        "summary_gflops": {
+          "min": 247.745,
+          "median": 270.69449999999995,
+          "max": 336.889,
+          "mean": 281.9479,
+          "spread_pct": 32.93158893143378,
+          "stdev": 29.593146760882174
+        },
+        "attrs": {
+          "regs": 90,
+          "static_shared": 8192,
+          "max_threads": 640
+        },
+        "samples": [
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:90 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=2950.45\ngflops=333.183\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:90 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 2950.45,
+            "gflops": 333.183,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 90,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:90 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=2917.99\ngflops=336.889\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:90 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 2917.99,
+            "gflops": 336.889,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 90,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:90 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3416.47\ngflops=287.735\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:90 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3416.47,
+            "gflops": 287.735,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 90,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:90 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3618.82\ngflops=271.647\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:90 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3618.82,
+            "gflops": 271.647,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 90,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:90 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3643.7\ngflops=269.792\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:90 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3643.7,
+            "gflops": 269.792,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 90,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:90 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3619.48\ngflops=271.597\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:90 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3619.48,
+            "gflops": 271.597,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 90,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:90 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3967.95\ngflops=247.745\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:90 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3967.95,
+            "gflops": 247.745,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 90,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:90 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3685.43\ngflops=266.737\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:90 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3685.43,
+            "gflops": 266.737,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 90,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:90 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3676.12\ngflops=267.413\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:90 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3676.12,
+            "gflops": 267.413,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 90,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          },
+          {
+            "raw": "kind=mini\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin\nkernel=kernel_tb_kernel_0\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=0\nattrs=regs:90 static_shared:8192 max_threads:640\niters=20000 warmup=500\navg_ns=3685.38\ngflops=266.741\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "mini",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.mini.bin",
+            "kernel": "kernel_tb_kernel_0",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=0",
+            "attrs": "regs:90 static_shared:8192 max_threads:640",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3685.38,
+            "gflops": 266.741,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 90,
+              "static_shared": 8192,
+              "max_threads": 640
+            }
+          }
+        ]
+      },
+      "triton": {
+        "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin",
+        "kernel": "matmul_kernel",
+        "kind": "triton9",
+        "shared_bytes": 8704,
+        "shared_source": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.json",
+        "summary_ns": {
+          "min": 2951.42,
+          "median": 3674.75,
+          "max": 3823.1,
+          "mean": 3554.512,
+          "spread_pct": 23.72079733315191,
+          "stdev": 322.6345542491622
+        },
+        "summary_gflops": {
+          "min": 257.131,
+          "median": 267.512,
+          "max": 333.073,
+          "mean": 278.9112,
+          "spread_pct": 28.388259218278062,
+          "stdev": 28.790069649099493
+        },
+        "attrs": {
+          "regs": 122,
+          "static_shared": 0,
+          "max_threads": 512
+        },
+        "samples": [
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin\nkernel=matmul_kernel\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:122 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=2953.22\ngflops=332.871\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:122 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 2953.22,
+            "gflops": 332.871,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 122,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin\nkernel=matmul_kernel\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:122 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=2951.42\ngflops=333.073\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:122 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 2951.42,
+            "gflops": 333.073,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 122,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin\nkernel=matmul_kernel\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:122 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3652.55\ngflops=269.138\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:122 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3652.55,
+            "gflops": 269.138,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 122,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin\nkernel=matmul_kernel\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:122 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3823.1\ngflops=257.131\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:122 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3823.1,
+            "gflops": 257.131,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 122,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin\nkernel=matmul_kernel\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:122 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3671.55\ngflops=267.745\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:122 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3671.55,
+            "gflops": 267.745,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 122,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin\nkernel=matmul_kernel\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:122 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3611.55\ngflops=272.193\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:122 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3611.55,
+            "gflops": 272.193,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 122,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin\nkernel=matmul_kernel\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:122 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3677.95\ngflops=267.279\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:122 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3677.95,
+            "gflops": 267.279,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 122,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin\nkernel=matmul_kernel\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:122 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3747.07\ngflops=262.349\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:122 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3747.07,
+            "gflops": 262.349,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 122,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin\nkernel=matmul_kernel\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:122 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3735.6\ngflops=263.154\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:122 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3735.6,
+            "gflops": 263.154,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 122,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          },
+          {
+            "raw": "kind=triton9\nbinary=/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin\nkernel=matmul_kernel\nshape=160x96x32\nlaunch=grid(6,1,1) block(128,1,1) dyn_shared=8704\nattrs=regs:122 static_shared:0 max_threads:512\niters=20000 warmup=500\navg_ns=3721.11\ngflops=264.179\nc00=640000\ncmid=2.53953e+09\nclast=9.8304e+09\nchecksum=3.81341e+13\n",
+            "kind": "triton9",
+            "binary": "/tmp/mini_triton_stage1_fair_bench_20260407_after_vector_fix/160x96x32_general/160x96x32_general.cubin",
+            "kernel": "matmul_kernel",
+            "shape": "160x96x32",
+            "launch": "grid(6,1,1) block(128,1,1) dyn_shared=8704",
+            "attrs": "regs:122 static_shared:0 max_threads:512",
+            "iters": "20000 warmup=500",
+            "avg_ns": 3721.11,
+            "gflops": 264.179,
+            "c00": 640000.0,
+            "cmid": 2539530000.0,
+            "clast": 9830400000.0,
+            "checksum": 38134100000000.0,
+            "attrs_parsed": {
+              "regs": 122,
+              "static_shared": 0,
+              "max_threads": 512
+            }
+          }
+        ]
+      },
+      "comparison": {
+        "median_ns_delta": "mini 快 1.19%",
+        "mini_over_triton_median_pct": 101.18846015106331
+      },
+      "measurement": {
+        "unstable": true,
+        "unstable_spread_threshold": 10.0,
+        "extra_rounds_run": 5,
+        "total_rounds_run": 10
+      }
+    }
+  ],
+  "preheat": {
+    "enabled": true,
+    "heater_case": "128x128x64",
+    "attempts": [
+      {
+        "attempt": 1,
+        "before": {
+          "pstate": "P0",
+          "sm_clock_mhz": 1470,
+          "sm_clock_max_mhz": 2100,
+          "mem_clock_mhz": 7001,
+          "temperature_c": 54
+        },
+        "after": {
+          "pstate": "P0",
+          "sm_clock_mhz": 1965,
+          "sm_clock_max_mhz": 2100,
+          "mem_clock_mhz": 7001,
+          "temperature_c": 56
+        },
+        "mini_avg_ns": 7921.66,
+        "triton_avg_ns": 7759.56
+      }
+    ],
+    "target_floor_pct": 90.0,
+    "target_floor_mhz": 1890,
+    "reached_hot_clock": true
+  },
+  "gpu_state_after_preheat": {
+    "pstate": "P0",
+    "sm_clock_mhz": 1965,
+    "sm_clock_max_mhz": 2100,
+    "mem_clock_mhz": 7001,
+    "temperature_c": 56
+  },
+  "execution_order": "hot_first",
+  "requested_case_order": [
+    "64x64x32",
+    "64x128x32",
+    "128x64x32",
+    "64x64x64",
+    "128x128x32",
+    "128x128x64",
+    "96x80x32_general",
+    "192x128x32_grouped",
+    "160x96x32_general"
+  ],
+  "measured_case_order": [
+    "128x128x64",
+    "192x128x32_grouped",
+    "128x128x32",
+    "160x96x32_general",
+    "64x128x32",
+    "128x64x32",
+    "64x64x64",
+    "96x80x32_general",
+    "64x64x32"
+  ],
+  "gpu_state_after_all": {
+    "pstate": "P0",
+    "sm_clock_mhz": 1875,
+    "sm_clock_max_mhz": 2100,
+    "mem_clock_mhz": 7001,
+    "temperature_c": 60
+  }
+}

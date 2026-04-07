@@ -24,6 +24,15 @@ static bool hasBoundaryOnN(const KernelConfig &config) {
   return (config.problemN % config.blockN) != 0;
 }
 
+static bool hasScalarTailOnN(const KernelConfig &config, int64_t vectorWidth) {
+  if (!hasBoundaryOnN(config) || vectorWidth <= 0)
+    return false;
+  int64_t remainderN = config.problemN % config.blockN;
+  if (remainderN == 0)
+    return false;
+  return (remainderN % vectorWidth) != 0;
+}
+
 static int64_t getScalarByteWidth(ScalarKind kind) {
   switch (kind) {
   case ScalarKind::F16:
@@ -32,6 +41,10 @@ static int64_t getScalarByteWidth(ScalarKind kind) {
     return 4;
   }
   llvm_unreachable("unknown scalar kind");
+}
+
+static bool isSupportedGlobalVectorWidth(int64_t vectorWidth) {
+  return vectorWidth == 2 || vectorWidth == 4;
 }
 
 static DenseI64ArrayAttr buildI64ArrayAttr(Builder &builder,
@@ -169,6 +182,8 @@ static StringRef stringifyTargetLandingKind(TargetLandingKind kind) {
     return "register_pack_global_vector";
   case TargetLandingKind::SharedPackThenGlobalVector:
     return "shared_pack_then_global_vector";
+  case TargetLandingKind::SharedRelayThenGlobalVector:
+    return "shared_relay_then_global_vector";
   }
   llvm_unreachable("unknown epilogue target landing kind");
 }
@@ -181,6 +196,8 @@ static FailureOr<TargetLandingKind> parseTargetLandingKind(StringRef value,
     return TargetLandingKind::RegisterPackGlobalVector;
   if (value == "shared_pack_then_global_vector")
     return TargetLandingKind::SharedPackThenGlobalVector;
+  if (value == "shared_relay_then_global_vector")
+    return TargetLandingKind::SharedRelayThenGlobalVector;
   op->emitError() << "unknown epilogue target landing kind `" << value << "`";
   return failure();
 }
@@ -622,6 +639,10 @@ static LogicalResult validateDirectGlobalPlan(const DirectGlobalVectorPlan &plan
                            << " direct-global owner scope must currently stay "
                               "`per_warp_template`";
   }
+  if (plan.scalarTail && !plan.boundaryAware) {
+    return op->emitError()
+           << role << " direct-global scalar tail requires boundary awareness";
+  }
   if (plan.laneAccess.laneRowGroupSize <= 0 ||
       plan.laneAccess.laneColGroupSize <= 0 ||
       plan.laneAccess.laneColStride <= 0 ||
@@ -680,12 +701,12 @@ static LogicalResult validateTargetLandingPlan(
     return success();
   }
 
-  if (plan.kind != TargetLandingKind::SharedPackThenGlobalVector) {
-    if (plan.kind != TargetLandingKind::RegisterPackGlobalVector) {
-      return op->emitError()
-             << "direct-global epilogue must carry an explicit register/shared "
-                "target landing contract";
-    }
+  if (plan.kind != TargetLandingKind::SharedPackThenGlobalVector &&
+      plan.kind != TargetLandingKind::SharedRelayThenGlobalVector &&
+      plan.kind != TargetLandingKind::RegisterPackGlobalVector) {
+    return op->emitError()
+           << "direct-global epilogue must carry an explicit register/shared "
+              "target landing contract";
   }
   if (accumulator.packs.empty() || accumulator.packs.front().vectorWidth <= 0) {
     return op->emitError()
@@ -740,6 +761,20 @@ static LogicalResult validateTargetLandingPlan(
         plan.requiredSharedBytes != 0 || plan.requiredSyncKind != "none") {
       return op->emitError()
              << "register-pack landing must not carry shared-pack payload";
+    }
+    return success();
+  }
+  if (plan.kind == TargetLandingKind::SharedRelayThenGlobalVector) {
+    if (plan.sharedTileRows <= 0 || plan.sharedTileCols <= 0 ||
+        plan.sharedPackSlots <= 0 ||
+        plan.initSharedStoreVectorWidth <= 0 ||
+        plan.initSharedLoadVectorWidth <= 0 ||
+        plan.storeSharedStoreVectorWidth <= 0 ||
+        plan.storeSharedLoadVectorWidth <= 0 ||
+        plan.requiredSharedBytes <= 0 || plan.requiredSyncKind == "none") {
+      return op->emitError()
+             << "shared-relay landing must carry explicit shared relay "
+                "materialization metadata";
     }
     return success();
   }
@@ -880,8 +915,9 @@ static EpiloguePlan deriveDirectEpiloguePlan(
   bool needsBoundaryGuard = hasBoundaryOnM(config) || hasBoundaryOnN(config);
   init.boundaryAware = needsBoundaryGuard;
   store.boundaryAware = needsBoundaryGuard;
-  init.scalarTail = needsBoundaryGuard;
-  store.scalarTail = needsBoundaryGuard;
+  bool needsScalarTail = hasScalarTailOnN(config, directVectorWidth);
+  init.scalarTail = needsScalarTail;
+  store.scalarTail = needsScalarTail;
   init.laneAccess = accumulator.laneAccess;
   store.laneAccess = accumulator.laneAccess;
   init.laneAccess.laneColStride = init.vectorWidth;
@@ -954,11 +990,6 @@ deriveTargetLandingPlan(const KernelConfig &config, const TargetInfo &target,
                         const AccumulatorPlan &accumulator,
                         const EpiloguePlan &epilogue, Operation *op) {
   (void)target;
-  if (!config.exactTile) {
-    op->emitError()
-        << "stage1 target landing currently requires exact-tile kernels";
-    return failure();
-  }
   auto *init = std::get_if<DirectGlobalVectorPlan>(&epilogue.init);
   auto *store = std::get_if<DirectGlobalVectorPlan>(&epilogue.store);
   if (!init || !store || init->packs.empty() || store->packs.empty() ||
@@ -991,6 +1022,22 @@ deriveTargetLandingPlan(const KernelConfig &config, const TargetInfo &target,
     return failure();
   }
   int64_t packsPerWarpRow = packsInOwnerTemplate / packRowCount;
+  int64_t fragmentVectorWidth = accumulator.packs.front().vectorWidth;
+  if (init->vectorWidth != store->vectorWidth) {
+    op->emitError() << "target landing requires init/store direct vector widths "
+                       "to stay aligned";
+    return failure();
+  }
+  if (!isSupportedGlobalVectorWidth(init->vectorWidth)) {
+    op->emitError() << "target landing currently requires vector<2xf32> or "
+                       "vector<4xf32> direct-global C rows";
+    return failure();
+  }
+  bool needsBoundaryGuard = init->boundaryAware || store->boundaryAware;
+  bool canUseBoundaryAwareDirect =
+      !needsBoundaryGuard ||
+      (init->vectorWidth == fragmentVectorWidth &&
+       store->vectorWidth == fragmentVectorWidth);
 
   TargetLandingPlan plan;
   plan.kind = TargetLandingKind::RegisterPackGlobalVector;
@@ -1001,10 +1048,10 @@ deriveTargetLandingPlan(const KernelConfig &config, const TargetInfo &target,
   plan.directPackRows = init->packs.front().rows;
   plan.directPackCols = init->packs.front().cols;
   plan.warpBatchingGroup = packsPerWarpRow;
-  plan.requiredSharedBytes = 0;
   plan.expectedRegisterFootprint =
       accumulator.registersPerWarp * accumulator.packs.front().elemCount +
       init->vectorWidth * init->laneAccess.rowOffsets.size();
+  plan.requiredSharedBytes = 0;
   plan.sharedTileRows = 0;
   plan.sharedTileCols = 0;
   plan.sharedPackSlots = 0;
@@ -1016,9 +1063,18 @@ deriveTargetLandingPlan(const KernelConfig &config, const TargetInfo &target,
   plan.useSharedPackForStore = false;
   plan.requiredSyncKind = "none";
   plan.reason =
-      "exact_tile direct_global_vector packs are derived from the fixed-point "
-      "accumulator ownership grid and lower as register pack/unpack without "
-      "shared relay";
+      !config.exactTile && !canUseBoundaryAwareDirect
+          ? "final C landing stays register-pack/global-vector; any shared "
+            "row reorder now lives in tb.epilogue_reorder_plan and the "
+            "unified CTA workspace instead of this landing contract"
+          : (config.exactTile
+                 ? "exact_tile direct_global_vector packs are derived from the "
+                   "fixed-point accumulator ownership grid and lower as "
+                   "register pack/unpack without shared relay"
+                 : "boundary-aware direct_global_vector keeps the final C "
+                   "landing in register packs because every direct pack "
+                   "already matches one accumulator fragment width and can "
+                   "be masked lane-locally");
   return plan;
 }
 

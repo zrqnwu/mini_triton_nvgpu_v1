@@ -1,0 +1,119 @@
+[
+  {
+    "shape": "256x256x64",
+    "config": {
+      "m": 256,
+      "n": 256,
+      "k": 64,
+      "block_m": 128,
+      "block_n": 128,
+      "block_k": 64,
+      "num_warps": 4,
+      "num_stages": 2,
+      "exact_tile": true,
+      "group_m": 1,
+      "block_x": 128,
+      "grid_x": 4
+    },
+    "mini_binary": "/tmp/mini_triton_stage1_large_shapes_20260407/256x256x64/256x256x64.mini.bin",
+    "triton_binary": "/tmp/mini_triton_stage1_large_shapes_20260407/256x256x64/256x256x64.cubin",
+    "triton_shared": 32768,
+    "mini_summary_ns": {
+      "min": 6250.86,
+      "median": 6251.85,
+      "max": 6862.43,
+      "mean": 6455.046666666666,
+      "spread_pct": 9.78222446155939,
+      "stdev": 352.804662998285
+    },
+    "triton_summary_ns": {
+      "min": 7983.23,
+      "median": 7990.13,
+      "max": 10181.6,
+      "mean": 8718.32,
+      "spread_pct": 27.5135698668232,
+      "stdev": 1267.2423490792914
+    },
+    "mini_median_gflops": 1341.7801130865264,
+    "triton_median_gflops": 1049.871278690084,
+    "delta": "mini 快 27.80%"
+  },
+  {
+    "shape": "256x256x128",
+    "config": {
+      "m": 256,
+      "n": 256,
+      "k": 128,
+      "block_m": 128,
+      "block_n": 128,
+      "block_k": 64,
+      "num_warps": 4,
+      "num_stages": 2,
+      "exact_tile": true,
+      "group_m": 1,
+      "block_x": 128,
+      "grid_x": 4
+    },
+    "mini_binary": "/tmp/mini_triton_stage1_large_shapes_20260407/256x256x128/256x256x128.mini.bin",
+    "triton_binary": "/tmp/mini_triton_stage1_large_shapes_20260407/256x256x128/256x256x128.cubin",
+    "triton_shared": 32768,
+    "mini_summary_ns": {
+      "min": 12170.1,
+      "median": 12170.4,
+      "max": 12174.2,
+      "mean": 12171.566666666666,
+      "spread_pct": 0.033688292907384836,
+      "stdev": 2.2854612955233216
+    },
+    "triton_summary_ns": {
+      "min": 13558.7,
+      "median": 13585.5,
+      "max": 13585.9,
+      "mean": 13576.699999999999,
+      "spread_pct": 0.20021346288321304,
+      "stdev": 15.589740215923534
+    },
+    "mini_median_gflops": 1378.5262604351542,
+    "triton_median_gflops": 1234.9354826837437,
+    "delta": "mini 快 11.63%"
+  },
+  {
+    "shape": "320x224x64_general",
+    "config": {
+      "m": 320,
+      "n": 224,
+      "k": 64,
+      "block_m": 64,
+      "block_n": 64,
+      "block_k": 64,
+      "num_warps": 4,
+      "num_stages": 2,
+      "exact_tile": false,
+      "group_m": 1,
+      "block_x": 128,
+      "grid_x": 20
+    },
+    "mini_binary": "/tmp/mini_triton_stage1_large_shapes_20260407/320x224x64_general/320x224x64_general.mini.bin",
+    "triton_binary": "/tmp/mini_triton_stage1_large_shapes_20260407/320x224x64_general/320x224x64_general.cubin",
+    "triton_shared": 16384,
+    "mini_summary_ns": {
+      "min": 5422.16,
+      "median": 5424.57,
+      "max": 5425.32,
+      "mean": 5424.016666666666,
+      "spread_pct": 0.05825346525162095,
+      "stdev": 1.6510703598978038
+    },
+    "triton_summary_ns": {
+      "min": 6506.41,
+      "median": 6534.27,
+      "max": 6554.25,
+      "mean": 6531.643333333333,
+      "spread_pct": 0.7321399329994038,
+      "stdev": 24.0279198711278
+    },
+    "mini_median_gflops": 1691.3856766527117,
+    "triton_median_gflops": 1404.141549094237,
+    "delta": "mini 快 20.46%"
+  }
+]

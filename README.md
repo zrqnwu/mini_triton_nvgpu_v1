@@ -32,6 +32,19 @@
 ## 架构文档
 
 - [Stage1 数据结构与主线 Pass 讲解](docs/stage1_data_structures_and_passes.md)
+- [文档总览](docs/README.md)
+
+仓库内还额外整理了两类中文文档：
+
+- `docs/方案与复盘/`
+  主要放阶段方案、根因复盘、性能收口与 Triton 对齐设计文档
+- `docs/学习与阅读/`
+  主要放学习路径、阅读顺序、项目讲解和面试准备材料
+
+## 结果归档
+
+- 最新真实 benchmark / NCU / 大形状测试结果归档在 `results/2026-04-07/`
+- 入口说明见 [results/2026-04-07/README.md](results/2026-04-07/README.md)
 
 ## 构建
 

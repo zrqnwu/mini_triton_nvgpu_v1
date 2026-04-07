@@ -1,12 +1,15 @@
 #include "tb/Analysis/AsyncPlan.h"
 #include "tb/Analysis/BufferModel.h"
 #include "tb/Analysis/EpiloguePlan.h"
+#include "tb/Analysis/EpilogueReorderPlan.h"
 #include "tb/Analysis/KernelConfig.h"
 #include "tb/Analysis/LatencyPlan.h"
 #include "tb/Analysis/LoopPlan.h"
 #include "tb/Analysis/PipelineExpansion.h"
 #include "tb/Analysis/PipelinePlan.h"
 #include "tb/Analysis/PipelineReady.h"
+#include "tb/Analysis/ResourceClosurePlan.h"
+#include "tb/Analysis/SharedWorkspacePlan.h"
 #include "tb/IR/TBOps.h"
 #include "tb/Transforms/Passes.h"
 
@@ -56,6 +59,110 @@ static void materializeMmaCluster(OpBuilder &builder, Location loc,
       builder.getStringAttr(cluster.reason));
 }
 
+static LogicalResult
+validateCleanupEpilogueContract(const KernelConfig &config,
+                                const EpiloguePlan &epilogue,
+                                const EpilogueReorderPlan &reorder,
+                                const SharedWorkspacePlan &workspace,
+                                const ResourceClosurePlan &resource,
+                                Operation *op) {
+  auto *init = std::get_if<DirectGlobalVectorPlan>(&epilogue.init);
+  auto *store = std::get_if<DirectGlobalVectorPlan>(&epilogue.store);
+  if (epilogue.initMode != AccumulatorInitMode::DirectGlobalVector ||
+      epilogue.storeMode != AccumulatorStoreMode::DirectGlobalVector || !init ||
+      !store) {
+    return op->emitError()
+           << "pipeline cleanup currently requires explicit "
+              "direct_global_vector init/store payloads plus a target landing";
+  }
+
+  const TargetLandingPlan &landing = epilogue.targetLanding;
+  if (landing.kind != TargetLandingKind::RegisterPackGlobalVector) {
+    return op->emitError()
+           << "pipeline cleanup now requires final C landing to stay "
+              "register-pack/global-vector; shared reorder ownership must live "
+              "in tb.epilogue_reorder_plan";
+  }
+  if (landing.globalVectorWidth <= 0 || landing.directPackRows <= 0 ||
+      landing.directPackCols <= 0 || landing.requiredSyncKind.empty()) {
+    return op->emitError()
+           << "pipeline cleanup requires positive C landing geometry";
+  }
+  if (landing.globalVectorWidth != init->vectorWidth ||
+      landing.globalVectorWidth != store->vectorWidth) {
+    return op->emitError()
+           << "pipeline cleanup requires init/store direct vector widths to "
+              "match the target landing";
+  }
+
+  bool boundaryAwareDirect = init->boundaryAware || store->boundaryAware;
+  if (config.exactTile) {
+    if (landing.kind != TargetLandingKind::RegisterPackGlobalVector ||
+        boundaryAwareDirect) {
+      return op->emitError()
+             << "exact-tile cleanup requires the register-pack direct-global "
+                "landing mainline without boundary-aware fallback";
+    }
+  } else if (landing.kind == TargetLandingKind::RegisterPackGlobalVector &&
+             !boundaryAwareDirect) {
+    if (reorder.kind == EpilogueReorderKind::None) {
+      return op->emitError()
+             << "non-exact direct C landing must be either boundary-aware or "
+                "explicitly paired with tb.epilogue_reorder_plan";
+    }
+  }
+
+  if (landing.sharedTileRows != 0 || landing.sharedTileCols != 0 ||
+      landing.sharedPackSlots != 0 || landing.initSharedStoreVectorWidth != 0 ||
+      landing.initSharedLoadVectorWidth != 0 ||
+      landing.storeSharedStoreVectorWidth != 0 ||
+      landing.storeSharedLoadVectorWidth != 0 ||
+      landing.useSharedPackForInit || landing.useSharedPackForStore ||
+      landing.requiredSharedBytes != 0 || landing.requiredSyncKind != "none") {
+    return op->emitError()
+           << "register-pack direct landing must not carry shared-pack "
+              "materialization metadata after reorder/workspace split";
+  }
+
+  if (reorder.kind == EpilogueReorderKind::None)
+    return success();
+
+  if (reorder.kind != EpilogueReorderKind::CTASharedRowReorder ||
+      reorder.sharedTileRows <= 0 || reorder.sharedTileCols <= 0 ||
+      reorder.liveSlots <= 0 || reorder.initSharedStoreVectorWidth <= 0 ||
+      reorder.initSharedLoadVectorWidth <= 0 ||
+      reorder.storeSharedStoreVectorWidth <= 0 ||
+      reorder.storeSharedLoadVectorWidth <= 0 ||
+      reorder.workspaceBarrierCount <= 0 || !reorder.requiresWarpSync ||
+      !reorder.reorderNeededForInit || !reorder.reorderNeededForStore ||
+      reorder.workspaceSyncKind != "cta") {
+    return op->emitError()
+           << "active epilogue reorder must carry complete CTA-workspace owner truth";
+  }
+  if (reorder.sharedTileCols % landing.globalVectorWidth != 0 ||
+      reorder.sharedTileCols % reorder.initSharedLoadVectorWidth != 0 ||
+      reorder.sharedTileCols % reorder.storeSharedStoreVectorWidth != 0) {
+    return op->emitError()
+           << "epilogue reorder tile must stay aligned with shared/global "
+              "vector widths";
+  }
+  if (failed(findSharedWorkspaceSegment(
+          workspace, SharedWorkspaceSegmentKind::EpilogueReorderScratch,
+          "epilogue_init_reorder_scratch", op)) ||
+      failed(findSharedWorkspaceSegment(
+          workspace, SharedWorkspaceSegmentKind::EpilogueReorderScratch,
+          "epilogue_store_reorder_scratch", op))) {
+    return failure();
+  }
+  if (resource.peakStaticSharedBytes != workspace.peakBytes ||
+      resource.workspaceTotalBytes != workspace.totalBytes ||
+      resource.selectedSharedWorkspacePolicy != workspace.selectedPolicy) {
+    return op->emitError()
+           << "resource closure must consume the unified shared workspace truth";
+  }
+  return success();
+}
+
 class TBCleanupPipeline
     : public impl::TBCleanupPipelineBase<TBCleanupPipeline> {
 public:
@@ -83,17 +190,23 @@ public:
       auto async = parseAsyncPlanAttr(op.getOperation());
       auto expansion = parsePipelineExpansionAttr(op.getOperation());
       auto epilogue = parseEpiloguePlanAttr(op.getOperation());
+      auto epilogueReorder = parseEpilogueReorderPlanAttr(op.getOperation());
+      auto sharedWorkspace = parseSharedWorkspacePlanAttr(op.getOperation());
+      auto resource = parseResourceClosurePlanAttr(op.getOperation());
       if (failed(model) || failed(latency) || failed(loopPlan) ||
           failed(pipeline) || failed(async) || failed(expansion) ||
-          failed(epilogue)) {
+          failed(epilogue) || failed(epilogueReorder) ||
+          failed(sharedWorkspace) || failed(resource)) {
         hadFailure = true;
         return;
       }
       (void)latency;
 
-      if (epilogue->initMode != AccumulatorInitMode::DirectGlobalVector ||
-          epilogue->storeMode != AccumulatorStoreMode::DirectGlobalVector) {
-        op.emitError() << "pipeline cleanup only accepts direct-global epilogues";
+      if (failed(
+              validateCleanupEpilogueContract(*config, *epilogue,
+                                              *epilogueReorder,
+                                              *sharedWorkspace, *resource,
+                                              op.getOperation()))) {
         hadFailure = true;
         return;
       }

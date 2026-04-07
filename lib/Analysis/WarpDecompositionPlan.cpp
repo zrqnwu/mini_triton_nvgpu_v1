@@ -73,6 +73,22 @@ static DictionaryAttr buildWarpTileAttr(Builder &builder,
             buildI64ArrayAttr(builder, tile.accumulatorPackIds));
   attrs.set("epilogue_pack_ids",
             buildI64ArrayAttr(builder, tile.epiloguePackIds));
+  attrs.set("shared_pack_ids", buildI64ArrayAttr(builder, tile.sharedPackIds));
+  attrs.set("reorder_row_vector_ids",
+            buildI64ArrayAttr(builder, tile.reorderRowVectorIds));
+  attrs.set("fragment_to_row_vector_map",
+            buildI64ArrayAttr(builder, tile.fragmentToRowVectorMap));
+  attrs.set("row_vector_store_order",
+            buildI64ArrayAttr(builder, tile.rowVectorStoreOrder));
+  attrs.set("row_vector_load_order",
+            buildI64ArrayAttr(builder, tile.rowVectorLoadOrder));
+  attrs.set("reorder_tile_base",
+            buildI64ArrayAttr(builder, tile.reorderTileBase));
+  attrs.set("reorder_needs_shared", builder.getBoolAttr(tile.reorderNeedsShared));
+  attrs.set("reduction_partial_ids",
+            buildI64ArrayAttr(builder, tile.reductionPartialIds));
+  attrs.set("persistent_batch_ids",
+            buildI64ArrayAttr(builder, tile.persistentBatchIds));
   return builder.getDictionaryAttr(attrs);
 }
 
@@ -90,10 +106,29 @@ static FailureOr<WarpTileCoverage> parseWarpTileAttr(DictionaryAttr dict,
   auto accumulatorPackIds =
       readDenseI64ArrayField(dict, "accumulator_pack_ids", op);
   auto epiloguePackIds = readDenseI64ArrayField(dict, "epilogue_pack_ids", op);
+  auto sharedPackIds = readDenseI64ArrayField(dict, "shared_pack_ids", op);
+  auto reorderRowVectorIds =
+      readDenseI64ArrayField(dict, "reorder_row_vector_ids", op);
+  auto fragmentToRowVectorMap =
+      readDenseI64ArrayField(dict, "fragment_to_row_vector_map", op);
+  auto rowVectorStoreOrder =
+      readDenseI64ArrayField(dict, "row_vector_store_order", op);
+  auto rowVectorLoadOrder =
+      readDenseI64ArrayField(dict, "row_vector_load_order", op);
+  auto reorderTileBase = readDenseI64ArrayField(dict, "reorder_tile_base", op);
+  auto reorderNeedsShared = dyn_cast_or_null<BoolAttr>(dict.get("reorder_needs_shared"));
+  auto reductionPartialIds =
+      readDenseI64ArrayField(dict, "reduction_partial_ids", op);
+  auto persistentBatchIds =
+      readDenseI64ArrayField(dict, "persistent_batch_ids", op);
   if (failed(warpId) || failed(coordM) || failed(coordN) ||
       failed(tileBaseM) || failed(tileBaseN) || failed(tileRows) ||
       failed(tileCols) || failed(mmaGroupIds) || failed(accumulatorPackIds) ||
-      failed(epiloguePackIds)) {
+      failed(epiloguePackIds) || failed(sharedPackIds) ||
+      failed(reorderRowVectorIds) || failed(fragmentToRowVectorMap) ||
+      failed(rowVectorStoreOrder) || failed(rowVectorLoadOrder) ||
+      failed(reorderTileBase) || !reorderNeedsShared ||
+      failed(reductionPartialIds) || failed(persistentBatchIds)) {
     return failure();
   }
   tile.warpId = *warpId;
@@ -106,6 +141,15 @@ static FailureOr<WarpTileCoverage> parseWarpTileAttr(DictionaryAttr dict,
   tile.mmaGroupIds = parseI64Array(*mmaGroupIds);
   tile.accumulatorPackIds = parseI64Array(*accumulatorPackIds);
   tile.epiloguePackIds = parseI64Array(*epiloguePackIds);
+  tile.sharedPackIds = parseI64Array(*sharedPackIds);
+  tile.reorderRowVectorIds = parseI64Array(*reorderRowVectorIds);
+  tile.fragmentToRowVectorMap = parseI64Array(*fragmentToRowVectorMap);
+  tile.rowVectorStoreOrder = parseI64Array(*rowVectorStoreOrder);
+  tile.rowVectorLoadOrder = parseI64Array(*rowVectorLoadOrder);
+  tile.reorderTileBase = parseI64Array(*reorderTileBase);
+  tile.reorderNeedsShared = reorderNeedsShared.getValue();
+  tile.reductionPartialIds = parseI64Array(*reductionPartialIds);
+  tile.persistentBatchIds = parseI64Array(*persistentBatchIds);
   return tile;
 }
 
@@ -126,6 +170,16 @@ static LogicalResult validateWarpDecompositionPlan(
   if (plan.numWarps <= 0 || plan.warpOrder.empty()) {
     return op->emitError()
            << "warp decomposition must carry positive warp metadata";
+  }
+  if (plan.landingOwner.empty() || plan.reductionOwner.empty() ||
+      plan.persistentOwner.empty()) {
+    return op->emitError()
+           << "warp decomposition must carry explicit landing/reduction/"
+              "persistent owner truth";
+  }
+  if (plan.reorderOwner.empty()) {
+    return op->emitError()
+           << "warp decomposition must carry explicit epilogue reorder owner truth";
   }
   if (plan.ownerScope != "per_warp_template") {
     return op->emitError() << "warp decomposition currently requires "
@@ -172,6 +226,39 @@ static LogicalResult validateWarpDecompositionPlan(
                   "and non-negative";
       }
     }
+    if (tile.reorderTileBase.size() != 2) {
+      return op->emitError()
+             << "warp decomposition reorder tile base must stay rank-2";
+    }
+    if (plan.reorderOwner == "none") {
+      if (tile.reorderNeedsShared || !tile.reorderRowVectorIds.empty() ||
+          !tile.fragmentToRowVectorMap.empty() ||
+          !tile.rowVectorStoreOrder.empty() || !tile.rowVectorLoadOrder.empty()) {
+        return op->emitError()
+               << "warp decomposition must not carry reorder metadata when "
+                  "reorder_owner is `none`";
+      }
+    } else {
+      if (!tile.reorderNeedsShared || tile.reorderRowVectorIds.empty() ||
+          tile.rowVectorStoreOrder.empty() || tile.rowVectorLoadOrder.empty() ||
+          tile.fragmentToRowVectorMap.empty()) {
+        return op->emitError()
+               << "warp decomposition must carry explicit reorder mapping when "
+                  "reorder_owner is active";
+      }
+      if ((tile.fragmentToRowVectorMap.size() % 2) != 0) {
+        return op->emitError()
+               << "fragment_to_row_vector_map must store fragment/row pairs";
+      }
+    }
+    if (plan.reductionOwner != "none" && tile.reductionPartialIds.empty()) {
+      return op->emitError()
+             << "split-k warp decomposition must carry reduction partial ids";
+    }
+    if (plan.persistentOwner != "none" && tile.persistentBatchIds.empty()) {
+      return op->emitError()
+             << "persistent warp decomposition must carry batch ids";
+    }
   }
   return success();
 }
@@ -183,6 +270,9 @@ mlir::tb::deriveWarpDecompositionPlan(const KernelConfig &config,
                                       const EncodingPlan &encodings,
                                       const AccumulatorPlan &accumulator,
                                       const EpiloguePlan &epilogue,
+                                      const EpilogueReorderPlan &epilogueReorder,
+                                      const ReductionPlan &reduction,
+                                      const PersistentWorkPlan &persistentWork,
                                       Operation *op) {
   auto warpGrid = getMmaWarpsPerCTA(encodings, op);
   auto warpTile = getAccumulatorTileShape(encodings, op);
@@ -207,6 +297,35 @@ mlir::tb::deriveWarpDecompositionPlan(const KernelConfig &config,
   plan.warpGrid.assign(warpGrid->begin(), warpGrid->end());
   plan.warpTile.assign(warpTile->begin(), warpTile->end());
   plan.ownerScope = accumulator.ownerScope;
+  switch (epilogue.targetLanding.kind) {
+  case TargetLandingKind::RegisterPackGlobalVector:
+    plan.landingOwner = "register_pack";
+    break;
+  case TargetLandingKind::SharedPackThenGlobalVector:
+    plan.landingOwner = "shared_pack";
+    break;
+  case TargetLandingKind::SharedRelayThenGlobalVector:
+    plan.landingOwner = "shared_relay";
+    break;
+  case TargetLandingKind::None:
+    plan.landingOwner = "none";
+    break;
+  }
+  switch (epilogueReorder.kind) {
+  case EpilogueReorderKind::None:
+    plan.reorderOwner = "none";
+    break;
+  case EpilogueReorderKind::CTASharedRowReorder:
+    plan.reorderOwner = "cta_shared_row_reorder";
+    break;
+  case EpilogueReorderKind::CTASharedRelay:
+    plan.reorderOwner = "cta_shared_relay";
+    break;
+  }
+  plan.reductionOwner =
+      reduction.requiresInterProgramReduction ? reduction.partialOwner : "none";
+  plan.persistentOwner =
+      persistentWork.enabled ? persistentWork.ownerScope : "none";
 
   if (plan.ownerScope != store->ownerScope) {
     op->emitError() << "warp decomposition requires accumulator and direct "
@@ -243,6 +362,24 @@ mlir::tb::deriveWarpDecompositionPlan(const KernelConfig &config,
     epiloguePackIds.push_back(pack.packId);
   }
 
+  SmallVector<int64_t, 16> reorderRowVectorIds;
+  SmallVector<int64_t, 32> fragmentToRowVectorMap;
+  SmallVector<int64_t, 16> rowVectorStoreOrder;
+  SmallVector<int64_t, 16> rowVectorLoadOrder;
+  for (const EpilogueRowVectorMapping &row : epilogueReorder.rowVectors) {
+    if (!isTemplateLocalCoverage(row.rowBase, row.colBase, /*rows=*/1,
+                                 row.vectorWidth, *warpTile)) {
+      continue;
+    }
+    reorderRowVectorIds.push_back(row.rowVectorId);
+    rowVectorStoreOrder.push_back(row.rowVectorId);
+    rowVectorLoadOrder.push_back(row.rowVectorId);
+    for (int64_t fragmentId : row.fragmentIds) {
+      fragmentToRowVectorMap.push_back(fragmentId);
+      fragmentToRowVectorMap.push_back(row.rowVectorId);
+    }
+  }
+
   if (mmaGroupIds.empty() || accumulatorPackIds.empty() || epiloguePackIds.empty()) {
     op->emitError() << "warp decomposition requires non-empty template-local "
                        "mma/accumulator/epilogue coverage";
@@ -263,6 +400,21 @@ mlir::tb::deriveWarpDecompositionPlan(const KernelConfig &config,
     tile.mmaGroupIds = mmaGroupIds;
     tile.accumulatorPackIds = accumulatorPackIds;
     tile.epiloguePackIds = epiloguePackIds;
+    if (epilogueReorder.kind != EpilogueReorderKind::None) {
+      tile.sharedPackIds = epiloguePackIds;
+      tile.reorderRowVectorIds = reorderRowVectorIds;
+      tile.fragmentToRowVectorMap = fragmentToRowVectorMap;
+      tile.rowVectorStoreOrder = rowVectorStoreOrder;
+      tile.rowVectorLoadOrder = rowVectorLoadOrder;
+      tile.reorderTileBase = {0, 0};
+      tile.reorderNeedsShared = true;
+    } else {
+      tile.reorderTileBase = {0, 0};
+    }
+    if (reduction.requiresInterProgramReduction)
+      tile.reductionPartialIds = accumulatorPackIds;
+    if (persistentWork.enabled)
+      tile.persistentBatchIds.push_back(0);
     plan.warps.push_back(std::move(tile));
   }
 
@@ -281,6 +433,10 @@ mlir::tb::buildWarpDecompositionPlanAttr(Builder &builder,
   attrs.set("warp_tile", buildI64ArrayAttr(builder, plan.warpTile));
   attrs.set("owner_scope", builder.getStringAttr(plan.ownerScope));
   attrs.set("warp_order", builder.getStringAttr(plan.warpOrder));
+  attrs.set("landing_owner", builder.getStringAttr(plan.landingOwner));
+  attrs.set("reorder_owner", builder.getStringAttr(plan.reorderOwner));
+  attrs.set("reduction_owner", builder.getStringAttr(plan.reductionOwner));
+  attrs.set("persistent_owner", builder.getStringAttr(plan.persistentOwner));
   SmallVector<Attribute> warps;
   warps.reserve(plan.warps.size());
   for (const WarpTileCoverage &tile : plan.warps)
@@ -317,6 +473,12 @@ mlir::tb::parseWarpDecompositionPlanAttr(Operation *op) {
   plan.ownerScope = readOptionalStringField(root, "owner_scope",
                                             "per_warp_template");
   plan.warpOrder = warpOrder->str();
+  plan.landingOwner = readOptionalStringField(root, "landing_owner",
+                                              "register_pack");
+  plan.reorderOwner = readOptionalStringField(root, "reorder_owner", "none");
+  plan.reductionOwner = readOptionalStringField(root, "reduction_owner", "none");
+  plan.persistentOwner =
+      readOptionalStringField(root, "persistent_owner", "none");
   plan.warps.reserve(warpsAttr.size());
   for (Attribute attr : warpsAttr) {
     auto dict = dyn_cast<DictionaryAttr>(attr);

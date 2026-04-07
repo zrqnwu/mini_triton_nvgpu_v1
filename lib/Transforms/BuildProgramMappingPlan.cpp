@@ -1,5 +1,7 @@
 #include "tb/Analysis/KernelConfig.h"
+#include "tb/Analysis/PersistentWorkPlan.h"
 #include "tb/Analysis/ProgramMappingPlan.h"
+#include "tb/Analysis/ReductionPlan.h"
 #include "tb/Analysis/TargetInfo.h"
 #include "tb/IR/TBOps.h"
 #include "tb/Transforms/Passes.h"
@@ -43,9 +45,25 @@ public:
         hadFailure = true;
         return;
       }
+      auto reductionPlan =
+          deriveReductionPlan(*config, *plan, op.getOperation());
+      if (failed(reductionPlan)) {
+        hadFailure = true;
+        return;
+      }
+      auto persistentWork =
+          derivePersistentWorkPlan(*config, *target, *plan, op.getOperation());
+      if (failed(persistentWork)) {
+        hadFailure = true;
+        return;
+      }
 
       op->setAttr("tb.program_mapping_plan",
                   buildProgramMappingPlanAttr(builder, *plan));
+      op->setAttr("tb.reduction_plan",
+                  buildReductionPlanAttr(builder, *reductionPlan));
+      op->setAttr("tb.persistent_work_plan",
+                  buildPersistentWorkPlanAttr(builder, *persistentWork));
       if (failed(setModuleContextAttr(module, kTBNumCTAsAttrName,
                                       builder.getI64IntegerAttr(plan->numCTAs),
                                       op.getOperation()))) {

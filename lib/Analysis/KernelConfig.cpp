@@ -222,8 +222,8 @@ LogicalResult mlir::tb::verifySupportedKernelConfig(const KernelConfig &config,
   if (config.requestedStages < 2 || config.requestedStages > 4) {
     return op->emitError() << "stage1 currently supports num_stages in [2, 4]";
   }
-  if (!(config.numWarps == 1 || config.numWarps == 4 || config.numWarps == 8)) {
-    return op->emitError() << "stage1 currently supports num_warps in {1, 4, 8}";
+  if (config.numWarps <= 0) {
+    return op->emitError() << "num_warps must be positive";
   }
   if (config.groupM <= 0)
     return op->emitError() << "group_m must be positive";

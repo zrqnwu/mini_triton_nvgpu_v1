@@ -17,11 +17,15 @@ FailureOr<KernelContract> mlir::tb::parseKernelContract(Operation *op) {
   auto kernel = getKernelConfig(pipelineMainline);
   auto semantics = parseMatmulSemanticsAttr(op);
   auto programMapping = parseProgramMappingPlanAttr(op);
+  auto reduction = parseReductionPlanAttr(op);
+  auto persistentWork = parsePersistentWorkPlanAttr(op);
   auto encodings = parseEncodingPlanAttr(op);
   auto transport = parseTransportPlanAttr(op);
   auto rewrite = parseMatmulRewritePlanAttr(op);
   auto accumulator = parseAccumulatorPlanAttr(op);
   auto epilogue = parseEpiloguePlanAttr(op);
+  auto epilogueReorder = parseEpilogueReorderPlanAttr(op);
+  auto sharedWorkspace = parseSharedWorkspacePlanAttr(op);
   auto buffers = parseBufferModelAttr(op);
   auto pipelineReady = parsePipelineReadyAttr(op);
   auto async = parseAsyncPlanAttr(op);
@@ -29,8 +33,10 @@ FailureOr<KernelContract> mlir::tb::parseKernelContract(Operation *op) {
   auto warpDecomposition = parseWarpDecompositionPlanAttr(op);
   auto resourceClosure = parseResourceClosurePlanAttr(op);
   if (failed(kernel) || failed(semantics) || failed(programMapping) ||
+      failed(reduction) || failed(persistentWork) ||
       failed(encodings) || failed(transport) || failed(rewrite) ||
-      failed(accumulator) || failed(epilogue) || failed(buffers) ||
+      failed(accumulator) || failed(epilogue) || failed(epilogueReorder) ||
+      failed(sharedWorkspace) || failed(buffers) ||
       failed(pipelineReady) || failed(async) || failed(target) ||
       failed(warpDecomposition) || failed(resourceClosure)) {
     return failure();
@@ -41,6 +47,8 @@ FailureOr<KernelContract> mlir::tb::parseKernelContract(Operation *op) {
   contract.semantics = std::move(*semantics);
   contract.target = *target;
   contract.programMapping = std::move(*programMapping);
+  contract.reduction = std::move(*reduction);
+  contract.persistentWork = std::move(*persistentWork);
   contract.encodings = std::move(*encodings);
   contract.transport = std::move(*transport);
   contract.rewrite = std::move(*rewrite);
@@ -49,6 +57,8 @@ FailureOr<KernelContract> mlir::tb::parseKernelContract(Operation *op) {
   contract.async = std::move(*async);
   contract.accumulator = std::move(*accumulator);
   contract.epilogue = std::move(*epilogue);
+  contract.epilogueReorder = std::move(*epilogueReorder);
+  contract.sharedWorkspace = std::move(*sharedWorkspace);
   contract.warpDecomposition = std::move(*warpDecomposition);
   contract.resourceClosure = std::move(*resourceClosure);
   return contract;

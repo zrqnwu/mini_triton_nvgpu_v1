@@ -319,6 +319,65 @@ deriveWarpGrid(const KernelConfig &config, const TargetInfo &target,
   return std::make_pair(bestWarpGridM, bestWarpGridN);
 }
 
+static int64_t getScalarByteWidth(ScalarKind kind) {
+  switch (kind) {
+  case ScalarKind::F16:
+    return 2;
+  case ScalarKind::F32:
+    return 4;
+  }
+  llvm_unreachable("unknown scalar kind");
+}
+
+struct SharedEncodingHeuristic {
+  SmallVector<int64_t, 2> order = {1, 0};
+  int64_t perPhase = 1;
+  int64_t maxPhase = 1;
+  bool transposed = false;
+  int64_t swizzlingByteWidth = 0;
+};
+
+static SharedEncodingHeuristic
+deriveSharedEncodingHeuristic(const TargetInfo &target,
+                              const SharedEncodingSpec &sharedSpec,
+                              const FragmentEncodingSpec &fragmentSpec,
+                              int64_t elementBytes) {
+  SharedEncodingHeuristic heuristic;
+  if (sharedSpec.logicalShape.size() != 2 || fragmentSpec.logicalShape.size() != 2 ||
+      elementBytes <= 0) {
+    return heuristic;
+  }
+
+  int64_t minorDim = heuristic.order.front();
+  int64_t sharedMinor = sharedSpec.logicalShape[minorDim];
+  int64_t fragmentMinor = fragmentSpec.logicalShape[minorDim];
+  int64_t contiguousElems = std::min(sharedMinor, fragmentMinor);
+  int64_t contiguousBytes = contiguousElems * elementBytes;
+  if (contiguousBytes <= 0)
+    return heuristic;
+
+  int64_t swizzleBytes = 0;
+  if (fragmentSpec.ldmatrixTileCount > 0 && elementBytes <= target.sharedBankBytes &&
+      contiguousBytes >= 16) {
+    swizzleBytes = 16;
+  } else if (elementBytes == target.sharedBankBytes && contiguousBytes >= 32) {
+    swizzleBytes = 32;
+  }
+  if (target.asyncCopyPreferredBytes > 0)
+    swizzleBytes = std::min(swizzleBytes, target.asyncCopyPreferredBytes);
+  if (swizzleBytes <= 0 || contiguousBytes % swizzleBytes != 0 ||
+      swizzleBytes % elementBytes != 0) {
+    return heuristic;
+  }
+
+  heuristic.swizzlingByteWidth = swizzleBytes;
+  heuristic.perPhase = std::max<int64_t>(1, 128 / contiguousBytes);
+  heuristic.maxPhase =
+      std::max<int64_t>(1, contiguousBytes / heuristic.swizzlingByteWidth);
+  heuristic.maxPhase = std::min<int64_t>(heuristic.maxPhase, 8);
+  return heuristic;
+}
+
 static FailureOr<EncodingPlan> deriveEncodingPlanDirect(
     const KernelConfig &config, const TargetInfo &target,
     const MatmulSemantics &semantics, const ProgramMappingPlan &programMapping,
@@ -450,6 +509,11 @@ static FailureOr<EncodingPlan> deriveEncodingPlanDirect(
       ArrayRef<int64_t>{warpGridM, warpGridN},
       ArrayRef<int64_t>(target.mmaInstrShape), cga);
 
+  SharedEncodingHeuristic aSharedHeuristic = deriveSharedEncodingHeuristic(
+      target, plan.aSharedSpec, plan.fragmentA, getScalarByteWidth(config.aScalar));
+  SharedEncodingHeuristic bSharedHeuristic = deriveSharedEncodingHeuristic(
+      target, plan.bSharedSpec, plan.fragmentB, getScalarByteWidth(config.bScalar));
+
   auto makeBlockedGlobal = [&](StringRef name,
                                ArrayRef<int64_t> order) -> int {
     EncodingEntry entry;
@@ -463,13 +527,14 @@ static FailureOr<EncodingPlan> deriveEncodingPlanDirect(
     return id;
   };
 
-  auto makeShared = [&](StringRef name) -> int {
+  auto makeShared = [&](StringRef name,
+                        const SharedEncodingHeuristic &heuristic) -> int {
     EncodingEntry entry;
     entry.name = name.str();
     entry.encodingAttr = SharedEncodingAttr::get(
-        ctx, ArrayRef<int64_t>{1, 0}, /*perPhase=*/1, /*maxPhase=*/1,
-        ArrayRef<int64_t>{}, ArrayRef<int64_t>{}, /*transposed=*/false,
-        /*swizzlingByteWidth=*/0, cga);
+        ctx, ArrayRef<int64_t>(heuristic.order), heuristic.perPhase,
+        heuristic.maxPhase, ArrayRef<int64_t>{}, ArrayRef<int64_t>{},
+        heuristic.transposed, heuristic.swizzlingByteWidth, cga);
     int id = static_cast<int>(plan.encodings.size());
     plan.encodings.push_back(std::move(entry));
     return id;
@@ -500,8 +565,8 @@ static FailureOr<EncodingPlan> deriveEncodingPlanDirect(
 
   plan.aGlobal = makeBlockedGlobal("a_global", aLayout->order);
   plan.bGlobal = makeBlockedGlobal("b_global", bLayout->order);
-  plan.aShared = makeShared("a_shared");
-  plan.bShared = makeShared("b_shared");
+  plan.aShared = makeShared("a_shared", aSharedHeuristic);
+  plan.bShared = makeShared("b_shared", bSharedHeuristic);
   plan.aDot = makeDot("a_dot", 0);
   plan.bDot = makeDot("b_dot", 1);
   plan.acc = makeAcc();
