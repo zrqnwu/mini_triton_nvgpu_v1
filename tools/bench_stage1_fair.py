@@ -14,6 +14,9 @@ from pathlib import Path
 from typing import Any
 
 
+ModuleAttrValue = bool | int | str
+
+
 @dataclass(frozen=True)
 class Stage1Case:
     name: str
@@ -33,14 +36,64 @@ class Stage1Case:
     triton_kernel: str = "matmul_kernel"
     triton_shared_fallback: int = 0
     triton_meta: str | None = None
+    extra_module_attrs: tuple[tuple[str, ModuleAttrValue], ...] = ()
+    compare_against_triton: bool = True
+    launch_grid_x_override: int | None = None
+    launch_grid_y_override: int | None = None
+    launch_grid_z_override: int | None = None
 
     @property
     def block_x(self) -> int:
         return self.num_warps * 32
 
+    def module_attr_dict(self) -> dict[str, ModuleAttrValue]:
+        return dict(self.extra_module_attrs)
+
+    def module_attr(self, name: str, default: ModuleAttrValue) -> ModuleAttrValue:
+        return self.module_attr_dict().get(name, default)
+
+    @property
+    def split_k(self) -> int:
+        return int(self.module_attr("tb.split-k", 1))
+
+    @property
+    def persistent(self) -> bool:
+        return bool(self.module_attr("tb.persistent", False))
+
+    @property
+    def num_ctas(self) -> int:
+        return int(self.module_attr("tb.num-ctas", 1))
+
     @property
     def grid_x(self) -> int:
-        return math.ceil(self.m / self.block_m) * math.ceil(self.n / self.block_n)
+        if self.launch_grid_x_override is not None:
+            return self.launch_grid_x_override
+        tiled_grid = math.ceil(self.m / self.block_m) * math.ceil(self.n / self.block_n)
+        if self.persistent:
+            return self.num_ctas
+        return tiled_grid * self.split_k
+
+    @property
+    def grid_y(self) -> int:
+        return self.launch_grid_y_override if self.launch_grid_y_override is not None else 1
+
+    @property
+    def grid_z(self) -> int:
+        return self.launch_grid_z_override if self.launch_grid_z_override is not None else 1
+
+    @property
+    def mapping_kind(self) -> str:
+        if self.persistent:
+            return "persistent_tile"
+        if self.split_k > 1:
+            return "split_k"
+        if (
+            self.group_m > 1
+            and math.ceil(self.m / self.block_m) > 1
+            and math.ceil(self.n / self.block_n) > 1
+        ):
+            return "grouped_tile"
+        return "tile"
 
     @property
     def flops(self) -> int:
@@ -193,6 +246,79 @@ CASES: tuple[Stage1Case, ...] = (
         num_stages=2,
         exact_tile=False,
         triton_kind="triton9",
+    ),
+    Stage1Case(
+        name="224x160x64_general",
+        m=224,
+        n=160,
+        k=64,
+        block_m=64,
+        block_n=64,
+        block_k=64,
+        num_warps=4,
+        num_stages=2,
+        exact_tile=False,
+        triton_kind="triton9",
+    ),
+    Stage1Case(
+        name="320x224x64_general",
+        m=320,
+        n=224,
+        k=64,
+        block_m=64,
+        block_n=64,
+        block_k=64,
+        num_warps=4,
+        num_stages=2,
+        exact_tile=False,
+        triton_kind="triton9",
+    ),
+    Stage1Case(
+        name="448x288x64_general",
+        m=448,
+        n=288,
+        k=64,
+        block_m=64,
+        block_n=64,
+        block_k=64,
+        num_warps=4,
+        num_stages=2,
+        exact_tile=False,
+        triton_kind="triton9",
+    ),
+    Stage1Case(
+        name="64x64x64_splitk2",
+        m=64,
+        n=64,
+        k=64,
+        block_m=64,
+        block_n=64,
+        block_k=32,
+        num_warps=1,
+        num_stages=2,
+        exact_tile=True,
+        compare_against_triton=False,
+        extra_module_attrs=(
+            ("tb.split-k", 2),
+            ("tb.reduction-mode", "split_k_parallel"),
+        ),
+    ),
+    Stage1Case(
+        name="192x128x32_persistent",
+        m=192,
+        n=128,
+        k=32,
+        block_m=64,
+        block_n=64,
+        block_k=32,
+        num_warps=4,
+        num_stages=2,
+        exact_tile=True,
+        compare_against_triton=False,
+        extra_module_attrs=(
+            ("tb.persistent", True),
+            ("tb.num-ctas", 2),
+        ),
     ),
 )
 
@@ -368,11 +494,27 @@ def ensure_bench_driver(binary: Path, source: Path) -> None:
     )
 
 
+def format_module_attr_value(value: ModuleAttrValue) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int):
+        return f"{value} : i64"
+    return json.dumps(value, ensure_ascii=False)
+
+
 def make_case_mlir(case: Stage1Case) -> str:
     group_m_attr = f", group_m = {case.group_m} : i64" if case.group_m != 1 else ""
+    module_attrs: list[tuple[str, ModuleAttrValue]] = [
+        ("tb.num-warps", case.num_warps),
+        ("tb.requested-stages", case.num_stages),
+    ]
+    module_attrs.extend(case.extra_module_attrs)
+    module_attr_text = ", ".join(
+        f'"{name}" = {format_module_attr_value(value)}'
+        for name, value in module_attrs
+    )
     return (
-        f'module attributes {{"tb.num-warps" = {case.num_warps} : i64, '
-        f'"tb.requested-stages" = {case.num_stages} : i64}} {{\n'
+        f"module attributes {{{module_attr_text}}} {{\n"
         f"  func.func @kernel(%A: memref<{case.m}x{case.k}xf16>, "
         f"%B: memref<{case.k}x{case.n}xf16>, %C: memref<{case.m}x{case.n}xf32>) {{\n"
         f"    tb.matmul %A, %B, %C {{block_m = {case.block_m} : i64, "
@@ -545,8 +687,8 @@ def run_bench_once(
         "--block-y=1",
         "--block-z=1",
         f"--grid-x={case.grid_x}",
-        "--grid-y=1",
-        "--grid-z=1",
+        f"--grid-y={case.grid_y}",
+        f"--grid-z={case.grid_z}",
         f"--shared={shared_bytes}",
         f"--warmup={warmup}",
         f"--iters={iters}",
@@ -608,17 +750,31 @@ def order_cases(cases: list[Stage1Case], mode: str) -> list[Stage1Case]:
 def collect_interleaved_samples(
     case: Stage1Case,
     mini_binary: Path,
-    triton_kind: str,
-    triton_binary: Path,
-    triton_kernel: str,
+    triton_case: dict[str, Any] | None,
     bench_driver: Path,
     rounds: int,
     warmup: int,
     iters: int,
-    triton_shared: int,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     mini_samples: list[dict[str, Any]] = []
     triton_samples: list[dict[str, Any]] = []
+    if triton_case is None:
+        for _ in range(rounds):
+            mini_samples.append(
+                run_bench_once(
+                    bench_driver,
+                    "mini",
+                    mini_binary,
+                    "kernel_tb_kernel_0",
+                    case,
+                    warmup,
+                    iters,
+                    0,
+                    False,
+                )
+            )
+        return mini_samples, triton_samples
+
     for round_index in range(rounds):
         order = ("mini", "triton") if round_index % 2 == 0 else ("triton", "mini")
         for label in order:
@@ -640,13 +796,13 @@ def collect_interleaved_samples(
                 triton_samples.append(
                     run_bench_once(
                         bench_driver,
-                        triton_kind,
-                        triton_binary,
-                        triton_kernel,
+                        triton_case["kind"],
+                        triton_case["binary"],
+                        triton_case["kernel"],
                         case,
                         warmup,
                         iters,
-                        triton_shared,
+                        triton_case["shared"],
                         False,
                     )
                 )
@@ -656,13 +812,10 @@ def collect_interleaved_samples(
 def preheat_gpu(
     heater_case: Stage1Case,
     mini_binary: Path,
-    triton_kind: str,
-    triton_binary: Path,
-    triton_kernel: str,
+    triton_case: dict[str, Any] | None,
     bench_driver: Path,
     warmup: int,
     iters: int,
-    triton_shared: int,
     max_attempts: int,
     floor_pct: float,
 ) -> dict[str, Any]:
@@ -680,25 +833,28 @@ def preheat_gpu(
             0,
             False,
         )
-        triton = run_bench_once(
-            bench_driver,
-            triton_kind,
-            triton_binary,
-            triton_kernel,
-            heater_case,
-            warmup,
-            iters,
-            triton_shared,
-            False,
-        )
+        triton = None
+        if triton_case is not None:
+            triton = run_bench_once(
+                bench_driver,
+                triton_case["kind"],
+                triton_case["binary"],
+                triton_case["kernel"],
+                heater_case,
+                warmup,
+                iters,
+                triton_case["shared"],
+                False,
+            )
         after = query_gpu_state()
         attempt_record = {
             "attempt": attempt + 1,
             "before": before,
             "after": after,
             "mini_avg_ns": mini["avg_ns"],
-            "triton_avg_ns": triton["avg_ns"],
         }
+        if triton is not None:
+            attempt_record["triton_avg_ns"] = triton["avg_ns"]
         attempts.append(attempt_record)
         if is_clock_hot_enough(after, floor_pct):
             return {
@@ -743,16 +899,17 @@ def main() -> int:
                 args.ptx_features,
             )
         mini_binaries[case.name] = mini_binary
-        triton_kind, triton_binary, triton_kernel, triton_shared, triton_shared_source = (
-            ensure_triton_case(case, args.output_dir, args.triton_builder)
-        )
-        triton_cases[case.name] = {
-            "kind": triton_kind,
-            "binary": triton_binary,
-            "kernel": triton_kernel,
-            "shared": triton_shared,
-            "shared_source": triton_shared_source,
-        }
+        if case.compare_against_triton:
+            triton_kind, triton_binary, triton_kernel, triton_shared, triton_shared_source = (
+                ensure_triton_case(case, args.output_dir, args.triton_builder)
+            )
+            triton_cases[case.name] = {
+                "kind": triton_kind,
+                "binary": triton_binary,
+                "kernel": triton_kernel,
+                "shared": triton_shared,
+                "shared_source": triton_shared_source,
+            }
 
     report: dict[str, Any] = {
         "rounds": args.rounds,
@@ -780,7 +937,7 @@ def main() -> int:
                     args.gpu_arch,
                     args.ptx_features,
                 )
-        if heater_case.name not in triton_cases:
+        if heater_case.compare_against_triton and heater_case.name not in triton_cases:
             triton_kind, triton_binary, triton_kernel, triton_shared, triton_shared_source = (
                 ensure_triton_case(heater_case, args.output_dir, args.triton_builder)
             )
@@ -791,17 +948,14 @@ def main() -> int:
                 "shared": triton_shared,
                 "shared_source": triton_shared_source,
             }
-        heater_triton = triton_cases[heater_case.name]
+        heater_triton = triton_cases.get(heater_case.name)
         preheat_report = preheat_gpu(
             heater_case,
             mini_binaries[heater_case.name],
-            heater_triton["kind"],
-            heater_triton["binary"],
-            heater_triton["kernel"],
+            heater_triton,
             args.bench_driver,
             args.preheat_warmup,
             args.preheat_iters,
-            heater_triton["shared"],
             args.preheat_max_attempts,
             args.preheat_clock_floor_pct,
         )
@@ -814,15 +968,16 @@ def main() -> int:
     case_summaries_by_name: dict[str, dict[str, Any]] = {}
     for case in execution_cases:
         gpu_state_before_case = query_gpu_state()
-        triton_case = triton_cases[case.name]
-        triton_shared = triton_case["shared"]
-        triton_shared_source = triton_case["shared_source"]
+        triton_case = triton_cases.get(case.name)
         case_preheat_report: dict[str, Any] | None = None
         if args.enable_preheat and not is_clock_hot_enough(
             gpu_state_before_case, args.preheat_clock_floor_pct
         ):
             heater_case = find_case(args.preheat_case)
-            if heater_case.name not in triton_cases:
+            if (
+                heater_case.compare_against_triton
+                and heater_case.name not in triton_cases
+            ):
                 triton_kind, triton_binary, triton_kernel, triton_shared, triton_shared_source = (
                     ensure_triton_case(heater_case, args.output_dir, args.triton_builder)
                 )
@@ -833,17 +988,14 @@ def main() -> int:
                     "shared": triton_shared,
                     "shared_source": triton_shared_source,
                 }
-            heater_triton = triton_cases[heater_case.name]
+            heater_triton = triton_cases.get(heater_case.name)
             case_preheat_report = preheat_gpu(
                 heater_case,
                 mini_binaries[heater_case.name],
-                heater_triton["kind"],
-                heater_triton["binary"],
-                heater_triton["kernel"],
+                heater_triton,
                 args.bench_driver,
                 args.preheat_warmup,
                 args.preheat_iters,
-                heater_triton["shared"],
                 args.preheat_max_attempts,
                 args.preheat_clock_floor_pct,
             )
@@ -859,73 +1011,84 @@ def main() -> int:
             shared_bytes=0,
             verify=True,
         )
-        run_bench_once(
-            args.bench_driver,
-            triton_case["kind"],
-            triton_case["binary"],
-            triton_case["kernel"],
-            case,
-            warmup=5,
-            iters=10,
-            shared_bytes=triton_shared,
-            verify=True,
-        )
+        if triton_case is not None:
+            run_bench_once(
+                args.bench_driver,
+                triton_case["kind"],
+                triton_case["binary"],
+                triton_case["kernel"],
+                case,
+                warmup=5,
+                iters=10,
+                shared_bytes=triton_case["shared"],
+                verify=True,
+            )
         mini_samples, triton_samples = collect_interleaved_samples(
             case,
             mini_binaries[case.name],
-            triton_case["kind"],
-            triton_case["binary"],
-            triton_case["kernel"],
+            triton_case,
             args.bench_driver,
             args.rounds,
             args.warmup,
             args.iters,
-            triton_shared,
         )
 
         mini_ns = [sample["avg_ns"] for sample in mini_samples]
-        triton_ns = [sample["avg_ns"] for sample in triton_samples]
         mini_gflops = [sample["gflops"] for sample in mini_samples]
-        triton_gflops = [sample["gflops"] for sample in triton_samples]
         mini_summary = summarize(mini_ns)
-        triton_summary = summarize(triton_ns)
         mini_gflops_summary = summarize(mini_gflops)
-        triton_gflops_summary = summarize(triton_gflops)
+        triton_ns = [sample["avg_ns"] for sample in triton_samples]
+        triton_gflops = [sample["gflops"] for sample in triton_samples]
+        triton_summary = summarize(triton_ns) if triton_ns else None
+        triton_gflops_summary = summarize(triton_gflops) if triton_gflops else None
         extra_rounds_run = 0
         if (
             args.extra_rounds_for_unstable > 0
             and (
                 spread_exceeds(mini_summary, args.unstable_spread_threshold)
-                or spread_exceeds(triton_summary, args.unstable_spread_threshold)
+                or (
+                    triton_summary is not None
+                    and spread_exceeds(triton_summary, args.unstable_spread_threshold)
+                )
             )
         ):
             extra_rounds_run = args.extra_rounds_for_unstable
             extra_mini_samples, extra_triton_samples = collect_interleaved_samples(
                 case,
                 mini_binaries[case.name],
-                triton_case["kind"],
-                triton_case["binary"],
-                triton_case["kernel"],
+                triton_case,
                 args.bench_driver,
                 args.extra_rounds_for_unstable,
                 args.warmup,
                 args.iters,
-                triton_shared,
             )
             mini_samples.extend(extra_mini_samples)
             triton_samples.extend(extra_triton_samples)
             mini_ns = [sample["avg_ns"] for sample in mini_samples]
-            triton_ns = [sample["avg_ns"] for sample in triton_samples]
             mini_gflops = [sample["gflops"] for sample in mini_samples]
-            triton_gflops = [sample["gflops"] for sample in triton_samples]
             mini_summary = summarize(mini_ns)
-            triton_summary = summarize(triton_ns)
             mini_gflops_summary = summarize(mini_gflops)
-            triton_gflops_summary = summarize(triton_gflops)
+            triton_ns = [sample["avg_ns"] for sample in triton_samples]
+            triton_gflops = [sample["gflops"] for sample in triton_samples]
+            triton_summary = summarize(triton_ns) if triton_ns else None
+            triton_gflops_summary = summarize(triton_gflops) if triton_gflops else None
         unstable = (
             spread_exceeds(mini_summary, args.unstable_spread_threshold)
-            or spread_exceeds(triton_summary, args.unstable_spread_threshold)
+            or (
+                triton_summary is not None
+                and spread_exceeds(triton_summary, args.unstable_spread_threshold)
+            )
         )
+        comparison = None
+        if triton_summary is not None:
+            comparison = {
+                "median_ns_delta": format_delta(
+                    mini_summary["median"], triton_summary["median"]
+                ),
+                "mini_over_triton_median_pct": triton_summary["median"]
+                / mini_summary["median"]
+                * 100.0,
+            }
         case_summary = {
             "shape": case.name,
             "config": {
@@ -939,9 +1102,18 @@ def main() -> int:
                 "num_stages": case.num_stages,
                 "exact_tile": case.exact_tile,
                 "group_m": case.group_m,
+                "split_k": case.split_k,
+                "persistent": case.persistent,
+                "mapping_kind": case.mapping_kind,
                 "block_x": case.block_x,
                 "grid_x": case.grid_x,
+                "grid_y": case.grid_y,
+                "grid_z": case.grid_z,
                 "cubin_format": case.cubin_format,
+                "compare_against_triton": case.compare_against_triton,
+                "extra_module_attrs": {
+                    name: value for name, value in case.extra_module_attrs
+                },
             },
             "gpu_state_before_case": gpu_state_before_case,
             "gpu_state_after_case": query_gpu_state(),
@@ -953,25 +1125,20 @@ def main() -> int:
                 "attrs": mini_samples[0].get("attrs_parsed", {}),
                 "samples": mini_samples,
             },
-            "triton": {
+            "triton": None
+            if triton_case is None
+            else {
                 "binary": str(triton_case["binary"]),
                 "kernel": triton_case["kernel"],
                 "kind": triton_case["kind"],
-                "shared_bytes": triton_shared,
-                "shared_source": triton_shared_source,
+                "shared_bytes": triton_case["shared"],
+                "shared_source": triton_case["shared_source"],
                 "summary_ns": triton_summary,
                 "summary_gflops": triton_gflops_summary,
                 "attrs": triton_samples[0].get("attrs_parsed", {}),
                 "samples": triton_samples,
             },
-            "comparison": {
-                "median_ns_delta": format_delta(
-                    mini_summary["median"], triton_summary["median"]
-                ),
-                "mini_over_triton_median_pct": triton_summary["median"]
-                / mini_summary["median"]
-                * 100.0,
-            },
+            "comparison": comparison,
             "measurement": {
                 "unstable": unstable,
                 "unstable_spread_threshold": args.unstable_spread_threshold,
@@ -1004,32 +1171,37 @@ def main() -> int:
         lines.append("")
     for case_summary in report["cases"]:
         mini_summary = case_summary["mini"]["summary_ns"]
-        triton_summary = case_summary["triton"]["summary_ns"]
         mini_gflops_summary = case_summary["mini"]["summary_gflops"]
-        triton_gflops_summary = case_summary["triton"]["summary_gflops"]
+        triton_block = case_summary["triton"]
         lines.append(f"===== {case_summary['shape']} =====")
         lines.append(
             "mini median_ns="
             f"{mini_summary['median']:.2f} "
             f"(mean={mini_summary['mean']:.2f}, min={mini_summary['min']:.2f}, "
-            f"max={mini_summary['max']:.2f}, spread={mini_summary['spread_pct']:.2f}%)"
+                f"max={mini_summary['max']:.2f}, spread={mini_summary['spread_pct']:.2f}%)"
         )
-        lines.append(
-            "triton median_ns="
-            f"{triton_summary['median']:.2f} "
-            f"(mean={triton_summary['mean']:.2f}, min={triton_summary['min']:.2f}, "
-            f"max={triton_summary['max']:.2f}, spread={triton_summary['spread_pct']:.2f}%)"
-        )
-        lines.append(
-            "mini median_gflops="
-            f"{mini_gflops_summary['median']:.2f} "
-            f"triton median_gflops={triton_gflops_summary['median']:.2f}"
-        )
-        lines.append(case_summary["comparison"]["median_ns_delta"])
-        lines.append(
-            "mini_vs_triton="
-            f"{case_summary['comparison']['mini_over_triton_median_pct']:.2f}%"
-        )
+        if triton_block is not None:
+            triton_summary = triton_block["summary_ns"]
+            triton_gflops_summary = triton_block["summary_gflops"]
+            lines.append(
+                "triton median_ns="
+                f"{triton_summary['median']:.2f} "
+                f"(mean={triton_summary['mean']:.2f}, min={triton_summary['min']:.2f}, "
+                f"max={triton_summary['max']:.2f}, spread={triton_summary['spread_pct']:.2f}%)"
+            )
+            lines.append(
+                "mini median_gflops="
+                f"{mini_gflops_summary['median']:.2f} "
+                f"triton median_gflops={triton_gflops_summary['median']:.2f}"
+            )
+            lines.append(case_summary["comparison"]["median_ns_delta"])
+            lines.append(
+                "mini_vs_triton="
+                f"{case_summary['comparison']['mini_over_triton_median_pct']:.2f}%"
+            )
+        else:
+            lines.append(f"mini median_gflops={mini_gflops_summary['median']:.2f}")
+            lines.append("comparison=mini-only")
         lines.append(
             "gpu_case="
             f"before={case_summary['gpu_state_before_case']} "

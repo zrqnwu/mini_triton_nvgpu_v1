@@ -101,6 +101,12 @@ cmake --build /home/zhangruiqi/mini_triton_nvgpu_v1/build -j8
 - `tb.pipeline_mainline` 的显式 stage/cluster 有序 mainline cluster IR
 - `tb.pipeline_ready` 的 strict mainline 收口挂载
 
+额外 smoke 样例：
+
+- `examples/smoke_grouped_192x128x32.mlir`
+- `examples/smoke_splitk_64x64x64.mlir`
+- `examples/smoke_persistent_192x128x32.mlir`
+
 ## Full Lowering
 
 ```bash
@@ -123,8 +129,9 @@ python3 /home/zhangruiqi/mini_triton_nvgpu_v1/tools/bench_stage1_fair.py
 
 这条脚本会：
 
-- fresh lowering 当前 mini stage1 exact-tile 六个 shape
-- 交错运行 mini / Triton，避免单边先热机
+- fresh lowering 当前 mini stage1 case 集
+- 对可公平对照的 case 交错运行 mini / Triton，避免单边先热机
+- 对 `split-k / persistent` 这类当前 bench 内为 mini-only 的 case，单独做 runtime/correctness 闭环
 - 多轮统计 `median/mean/min/max/spread`
 - 输出
   - `/tmp/mini_triton_stage1_fair_bench/stage1_fair_report.txt`

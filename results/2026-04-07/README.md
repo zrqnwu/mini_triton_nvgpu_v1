@@ -19,6 +19,11 @@
   - `ncu_96x80_triton.csv`
 - `large_shapes/`
   - `large_shapes_report.json`
+- `stage1_closure_20260407/`
+  - `stage1_fair_report.txt`
+  - `stage1_fair_report.json`
+  - `smoke_splitk_64x64x64.lowered.mlir`
+  - `smoke_persistent_192x128x32.lowered.mlir`
 
 ## 关键结论
 
@@ -43,7 +48,25 @@
   - Triton `6534.27 ns`
   - mini 快 `20.46%`
 
+新增这轮 stage1 收口结果：
+
+- `224x160x64_general`
+  - mini `4617.42 ns`
+  - Triton `4732.08 ns`
+  - mini 快 `2.48%`
+- `320x224x64_general`
+  - mini `5388.66 ns`
+  - Triton `6548.27 ns`
+  - mini 快 `21.52%`
+- `64x64x64_splitk2`
+  - mini-only runtime/correctness 闭环已打通
+  - 结果归档在 `stage1_closure_20260407/`
+- `192x128x32_persistent`
+  - mini-only runtime/correctness 闭环已打通
+  - 结果归档在 `stage1_closure_20260407/`
+
 ## 备注
 
 - 这里保留的是文本、JSON、CSV、MLIR、PTX 结果，方便复盘与对比。
 - 没有把临时 `.bin` / `.cubin` 构建产物整体提交进仓库，避免仓库变成制品仓库。
+- `split-k / persistent` 这轮先补的是 mini runtime 闭环与 lowering 归档，不是 Triton 一对一公平对照。

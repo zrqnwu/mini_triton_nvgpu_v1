@@ -1,0 +1,39 @@
+rounds=3 warmup=50 iters=2000
+gpu_before={'pstate': 'P0', 'sm_clock_mhz': 1470, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 56}
+gpu_after_preheat={'pstate': 'P0', 'sm_clock_mhz': 1470, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 56}
+
+===== 96x80x32_general =====
+mini median_ns=5539.33 (mean=5544.11, min=5538.82, max=5554.18, spread=0.28%)
+triton median_ns=6656.51 (mean=6638.91, min=6597.06, max=6663.17, spread=0.99%)
+mini median_gflops=88.73 triton median_gflops=73.84
+mini 快 20.17%
+mini_vs_triton=120.17%
+gpu_case=before={'pstate': 'P0', 'sm_clock_mhz': 1470, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 56} after={'pstate': 'P0', 'sm_clock_mhz': 1470, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 57}
+
+===== 224x160x64_general =====
+mini median_ns=4617.42 (mean=4619.73, min=4584.61, max=4657.15, spread=1.57%)
+triton median_ns=4732.08 (mean=4720.48, min=4694.53, max=4734.83, spread=0.85%)
+mini median_gflops=993.52 triton median_gflops=969.45
+mini 快 2.48%
+mini_vs_triton=102.48%
+gpu_case=before={'pstate': 'P0', 'sm_clock_mhz': 1470, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 56} after={'pstate': 'P0', 'sm_clock_mhz': 1470, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 56}
+
+===== 320x224x64_general =====
+mini median_ns=5388.66 (mean=5401.74, min=5387.23, max=5429.33, spread=0.78%)
+triton median_ns=6548.27 (mean=6542.30, min=6518.06, max=6560.58, spread=0.65%)
+mini median_gflops=1702.66 triton median_gflops=1401.14
+mini 快 21.52%
+mini_vs_triton=121.52%
+gpu_case=before={'pstate': 'P0', 'sm_clock_mhz': 1470, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 56} after={'pstate': 'P0', 'sm_clock_mhz': 1470, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 56}
+
+===== 64x64x64_splitk2 =====
+mini median_ns=5480.45 (mean=5480.11, min=5443.07, max=5516.80, spread=1.35%)
+mini median_gflops=95.67
+comparison=mini-only
+gpu_case=before={'pstate': 'P0', 'sm_clock_mhz': 1470, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 56} after={'pstate': 'P0', 'sm_clock_mhz': 1470, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 56}
+
+===== 192x128x32_persistent =====
+mini median_ns=6774.48 (mean=6771.19, min=6764.00, max=6775.09, spread=0.16%)
+mini median_gflops=232.18
+comparison=mini-only
+gpu_case=before={'pstate': 'P0', 'sm_clock_mhz': 1470, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 56} after={'pstate': 'P0', 'sm_clock_mhz': 1470, 'sm_clock_max_mhz': 2100, 'mem_clock_mhz': 7001, 'temperature_c': 56}
